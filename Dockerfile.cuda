@@ -1,0 +1,12 @@
+FROM nvidia/cuda:9.0-devel
+
+ENV TRACKINGITSU_BUILD_DIR /tmp/tracking-itsu/build
+ENV TRACKINGITSU_SRC_DIR /usr/local/tracking-itsu
+
+RUN apt-get update -qq \
+	&& apt-get -qq install wget cmake \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& mkdir $TRACKINGITSU_SRC_DIR
+
+WORKDIR $TRACKINGITSU_SRC_DIR

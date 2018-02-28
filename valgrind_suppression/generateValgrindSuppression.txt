@@ -1,0 +1,14 @@
+How to generate Valgrind suppression file (https://wiki.wxwidgets.org/Valgrind_Suppression_File_Howto)
+Requirements:
+	- valgrind
+	- gawk
+	- md5sum
+	- Parse valgrind suppressions.sh (https://wiki.wxwidgets.org/Parse_valgrind_suppressions.sh)
+	
+Execution:
+	- valgrind --leak-check=full --show-reachable=yes --error-limit=no --gen-suppressions=all --log-file=minimalraw.log ./myProg
+	- cat ./minimalraw.log | ./parse_valgrind_suppressions.sh > minimal.supp
+	- search for usefull suppression rule and write to new file suppressionVxx.supp
+	- search for wildcards, if needed
+	- valgrind --leak-check=full --show-reachable=yes --error-limit=no --suppressions=./suppressionVxx.supp --gen-suppressions=all --log-file=minimalraw.log ./myProg
+	- once there aren't too many error add suppressionVxx.supp path to ~/.valgrindrc
