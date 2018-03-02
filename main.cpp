@@ -19,7 +19,6 @@
 #endif
 
 #if TRACKINGITSU_OCL_MODE
-#include "ITSReconstruction/CA/openCl/Utils.h"
 #include "ITSReconstruction/CA/gpu/Context.h"
 #endif
 

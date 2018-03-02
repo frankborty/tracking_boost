@@ -256,7 +256,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
     mPrimaryVertexContext.initialize(event, iVertex);
     t2=clock();
 	float diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
-	//std::cout << std::setw(2) << "\t>Initialization completed in: " << diff << "ms" << std::endl;
+	std::cout << std::setw(2) << " - Initialization completed in: " << diff << "ms" << std::endl;
 
 #ifdef PRINT_CLUSTERS
     std::ofstream outfile;
@@ -277,12 +277,12 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
 
 	computeTracklets();
 	computeCells();
-    findCellsNeighbours();
+  /*  findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
-
+*/
   }
 
   return roads;
@@ -301,12 +301,10 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     float diff { };
 
     t1 = clock();
-
     mPrimaryVertexContext.initialize(event, iVertex);
-
     t2 = clock();
     diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
-    //std::cout << std::setw(2) << " - Context initialized in: " << diff << "ms" << std::endl;
+    std::cout << std::setw(2) << " - Context initialized in: " << diff << "ms" << std::endl;
 
     evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
     evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");

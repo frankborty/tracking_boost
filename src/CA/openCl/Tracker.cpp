@@ -21,7 +21,7 @@
 #include <ITSReconstruction/CA/Tracklet.h>
 #include "ITSReconstruction/CA/Definitions.h"
 #include "ITSReconstruction/CA/gpu/Vector.h"
-#include "ITSReconstruction/CA/openCl/Utils.h"
+#include "ITSReconstruction/CA/gpu/Utils.h"
 #include "boost/compute.hpp"
 namespace compute = boost::compute;
 
@@ -280,6 +280,7 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 			cl::NDRange(pseudoClusterNumber),
 			cl::NDRange(workgroupSize));
 
+
 	}
 
 	for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer)
@@ -370,7 +371,7 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 				cl::NDRange(pseudoTrackletsNumber),
 				cl::NDRange(workgroupSize));
 
-			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
+			//GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 		}
 
 		delete []firstLayerLookUpTable;
@@ -452,29 +453,31 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 		time = ((float) ty - (float) tx) / (CLOCKS_PER_SEC / 1000);
 		std::cout<< "\t>Total cells scan time = "<<time<<" ms" << std::endl;
 
-		return;
+
 
 		//compute cells
 		//calcolo le tracklet
 		//std::cout<<"calcolo le tracklet"<<std::endl;
 		tx=clock();
-		for (int iLayer { 0 }; iLayer < Constants::ITS::CellsPerRoad;++iLayer) {
+		for (int iLayer { 0 }; iLayer < 1/*Constants::ITS::CellsPerRoad*/;++iLayer) {
+			//std::cout<<"start layer "<<iLayer<<std::endl;
 			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 			oclComputeCellKernel.setArg(0, primaryVertexContext.mGPUContext.bPrimaryVertex);  //0 fPrimaryVertex
 			oclComputeCellKernel.setArg(1, primaryVertexContext.mGPUContext.bLayerIndex[iLayer]); //1 iCurrentLayer
 			oclComputeCellKernel.setArg(2, primaryVertexContext.mGPUContext.bTrackletsFoundForLayer);  //2 iLayerTrackletSize
 			oclComputeCellKernel.setArg(3, primaryVertexContext.mGPUContext.bTracklets[iLayer]); //3  currentLayerTracklets
 			oclComputeCellKernel.setArg(4, primaryVertexContext.mGPUContext.bTracklets[iLayer+1]); //4 nextLayerTracklets
-			oclComputeCellKernel.setArg(5, primaryVertexContext.mGPUContext.bClusters[iLayer]);  //6 currentLayerClusters
-			oclComputeCellKernel.setArg(6, primaryVertexContext.mGPUContext.bClusters[iLayer+1]);//7 nextLayerClusters
-			oclComputeCellKernel.setArg(7, primaryVertexContext.mGPUContext.bClusters[iLayer+2]);//8 next2LayerClusters
-			oclComputeCellKernel.setArg(8, primaryVertexContext.mGPUContext.bTrackletsLookupTable[iLayer]);//9  currentLayerTrackletsLookupTable
+			oclComputeCellKernel.setArg(5, primaryVertexContext.mGPUContext.bClusters[iLayer]);  //5 currentLayerClusters
+			oclComputeCellKernel.setArg(6, primaryVertexContext.mGPUContext.bClusters[iLayer+1]);//6 nextLayerClusters
+			oclComputeCellKernel.setArg(7, primaryVertexContext.mGPUContext.bClusters[iLayer+2]);//7 next2LayerClusters
+			oclComputeCellKernel.setArg(8, primaryVertexContext.mGPUContext.bTrackletsLookupTable[iLayer]);//8  currentLayerTrackletsLookupTable
 
 			if(iLayer==0)
 				oclComputeCellKernel.setArg(9, bCellLookUpTable);//9iCellsPerTrackletPreviousLayer;
 			else
-				oclComputeCellKernel.setArg(9, primaryVertexContext.mGPUContext.bCellsLookupTable[iLayer-1]);//9iCellsPerTrackletPreviousLayer
-			oclComputeCellKernel.setArg(10, primaryVertexContext.mGPUContext.bCells[iLayer]);
+				oclComputeCellKernel.setArg(9, primaryVertexContext.mGPUContext.bCellsLookupTable[iLayer-1]);//9 iCellsPerTrackletPreviousLayer
+			oclComputeCellKernel.setArg(10, primaryVertexContext.mGPUContext.bCells[iLayer]);	//10
+			//std::cout<<"fine caricamento parametri"<<std::endl;
 
 			int pseudoTrackersNumber=primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer];
 			if((pseudoTrackersNumber % workgroupSize)!=0){
@@ -486,27 +489,32 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 				cl::NullRange,
 				cl::NDRange(pseudoTrackersNumber),
 				cl::NDRange(workgroupSize));
-
+			//std::cout<<"lancio kernel"<<std::endl;
 			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
+			//std::cout<<"fine kernel"<<std::endl;
 
-/*
-			CellStruct* output = (CellStruct *) oclCommandqueues[iLayer].enqueueMapBuffer(
-				primaryVertexContext.openClPrimaryVertexContext.bCells[iLayer],
+
+			//oclCommandqueues[iLayer].finish();
+
+
+		}
+		for(int iLayer=0;iLayer<5;iLayer++){
+			//std::cout<<"Cell found starting from layer #"<<iLayer<<"	total:"<<cellsFound[iLayer]<<"\n";
+			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
+			/*CellStruct* output = (CellStruct *) GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].enqueueMapBuffer(
+				primaryVertexContext.mGPUContext.bCells[iLayer],
 				CL_TRUE, // block
 				CL_MAP_READ,
 				0,
 				cellsFound[iLayer]*sizeof(CellStruct)
-			);
-			oclCommandqueues[iLayer].finish();
-			outFileCell<<"Cell found starting from layer #"<<iLayer<<"	total:"<<cellsFound[iLayer]<<"\n";
-			for(int i=0;i<cellsFound[iLayer];i++){
-				//std::cout<<i<<std::endl;
-				outFileCell<<output[i].mFirstTrackletIndex<<"\t"<<output[i].mSecondTrackletIndex<<"\t"<<output[i].mCurvature<<"\t"<<output[i].mLevel<<"\t"<<output[i].mFirstClusterIndex<<"\t"<<output[i].mSecondClusterIndex<<"\t"<<output[i].mThirdClusterIndex<<"\n";
-				//outFileCell<<output[i].mFirstClusterIndex<<"\n";
-			}
-			std::cout<<"end layer "<<iLayer<<std::endl;
-*/
+			);*/
+			//std::cout<<i<<std::endl;
+			//for(int i=0;i<cellsFound[iLayer];i++){
+				//std::cout<<output[i].mFirstClusterIndex<<"\t"<<output[i].mSecondClusterIndex<<"\t"<<output[i].mThirdClusterIndex<<std::endl;
+			//outFileCell<<output[i].mFirstClusterIndex<<"\n";
+			//}
 		}
+
 		ty=clock();
 		time = ((float) ty - (float) tx) / (CLOCKS_PER_SEC / 1000);
 		std::cout<< "\t>Total cells compute time = "<<time<<" ms" << std::endl;
@@ -519,9 +527,11 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 	}catch(const cl::Error &err){
 		std::string errString=o2::ITS::CA::GPU::Utils::OCLErr_code(err.err());
 		//std::cout<< errString << std::endl;
+		std::cout << "Allocation failed: " << err.what() << '\n';
 		throw std::runtime_error { errString };
 	}
 	catch( const std::exception & ex ) {
+		std::cout << "Allocation failed: " << ex.what() << '\n';
 	       throw std::runtime_error { ex.what() };
 	}
   	catch (...) {

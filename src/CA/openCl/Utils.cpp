@@ -13,7 +13,7 @@
 ///
 #include <string>
 #include <vector>
-#include "ITSReconstruction/CA/openCl/Utils.h"
+#include "ITSReconstruction/CA/gpu/Utils.h"
 #include "ITSReconstruction/CA/gpu/Context.h"
 
 #include <sstream>

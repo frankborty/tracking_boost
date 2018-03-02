@@ -14,7 +14,7 @@
 
 #include "ITSReconstruction/CA/Definitions.h"
 #include "ITSReconstruction/CA/gpu/Context.h"
-#include "ITSReconstruction/CA/openCl/Utils.h"
+#include "ITSReconstruction/CA/gpu/Utils.h"
 
 #define AMD_WAVEFRONT 		0x4043
 #define NVIDIA_WAVEFRONT 	0x4003
