@@ -456,10 +456,9 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 
 
 		//compute cells
-		//calcolo le tracklet
-		//std::cout<<"calcolo le tracklet"<<std::endl;
+		//std::cout<<"calcolo le cells"<<std::endl;
 		tx=clock();
-		for (int iLayer { 0 }; iLayer < 1/*Constants::ITS::CellsPerRoad*/;++iLayer) {
+		for (int iLayer { 0 }; iLayer < Constants::ITS::CellsPerRoad;++iLayer) {
 			//std::cout<<"start layer "<<iLayer<<std::endl;
 			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 			oclComputeCellKernel.setArg(0, primaryVertexContext.mGPUContext.bPrimaryVertex);  //0 fPrimaryVertex
@@ -489,16 +488,14 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 				cl::NullRange,
 				cl::NDRange(pseudoTrackersNumber),
 				cl::NDRange(workgroupSize));
-			//std::cout<<"lancio kernel"<<std::endl;
-			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
-			//std::cout<<"fine kernel"<<std::endl;
+
 
 
 			//oclCommandqueues[iLayer].finish();
 
 
 		}
-		for(int iLayer=0;iLayer<5;iLayer++){
+		for(int iLayer=0;iLayer<Constants::ITS::CellsPerRoad;iLayer++){
 			//std::cout<<"Cell found starting from layer #"<<iLayer<<"	total:"<<cellsFound[iLayer]<<"\n";
 			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 			/*CellStruct* output = (CellStruct *) GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].enqueueMapBuffer(

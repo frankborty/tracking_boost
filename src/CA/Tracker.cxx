@@ -275,8 +275,8 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
 
 #endif
 
-	computeTracklets();
-	computeCells();
+	evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
+	evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");
   /*  findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
