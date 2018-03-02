@@ -97,12 +97,6 @@ int myMax(int a,int b){
 	return b;
 }
 
-double myAbs(double iNum){
-	if(iNum<0)
-		return -1*iNum;
-	return iNum;
-}
-
 
 
 int getZBinIndex(int layerIndex, float zCoordinate){
@@ -207,10 +201,10 @@ __kernel void countLayerTracklets(
 		    		
 		    		  __global ClusterStruct *nextCluster=&nextLayerClusters[iNextLayerCluster];
 		    		  	
-		    		  const float deltaZ=myAbs(tanLambda * (nextCluster->rCoordinate - currentCluster->rCoordinate) + currentCluster->zCoordinate - nextCluster->zCoordinate);
-		    		  const float deltaPhi=myAbs(currentCluster->phiCoordinate - nextCluster->phiCoordinate);
+		    		  const float deltaZ=fabs(tanLambda * (nextCluster->rCoordinate - currentCluster->rCoordinate) + currentCluster->zCoordinate - nextCluster->zCoordinate);
+		    		  const float deltaPhi=fabs(currentCluster->phiCoordinate - nextCluster->phiCoordinate);
 
-		    		  if (deltaZ < TrackletMaxDeltaZThreshold[iLayer] && (deltaPhi<PhiCoordinateCut || myAbs(deltaPhi-TwoPi)<PhiCoordinateCut)){
+		    		  if (deltaZ < TrackletMaxDeltaZThreshold[iLayer] && (deltaPhi<PhiCoordinateCut || fabs(deltaPhi-TwoPi)<PhiCoordinateCut)){
 		    			  int iTrackletPosition=atom_inc(&iCurrentTrackletsPosition[iLayer])+1;
 		    			  ++clusterTrackletsNum;
 		    			  
@@ -292,10 +286,10 @@ __kernel void computeLayerTracklets(
 		    		
 		    		  __global ClusterStruct *nextCluster=&nextLayerClusters[iNextLayerCluster];
 		    		  	
-		    		  const float deltaZ=myAbs(tanLambda * (nextCluster->rCoordinate - currentCluster->rCoordinate) + currentCluster->zCoordinate - nextCluster->zCoordinate);
-		    		  const float deltaPhi=myAbs(currentCluster->phiCoordinate - nextCluster->phiCoordinate);
+		    		  const float deltaZ=fabs(tanLambda * (nextCluster->rCoordinate - currentCluster->rCoordinate) + currentCluster->zCoordinate - nextCluster->zCoordinate);
+		    		  const float deltaPhi=fabs(currentCluster->phiCoordinate - nextCluster->phiCoordinate);
 
-		    		  if (deltaZ < TrackletMaxDeltaZThreshold[iLayer] && (deltaPhi<PhiCoordinateCut || myAbs(deltaPhi-TwoPi)<PhiCoordinateCut)){
+		    		  if (deltaZ < TrackletMaxDeltaZThreshold[iLayer] && (deltaPhi<PhiCoordinateCut || fabs(deltaPhi-TwoPi)<PhiCoordinateCut)){
 		    			  __global TrackletStruct* tracklet=&currentLayerTracklets[currentLookUpValue];
 		    			  
 		    			  tracklet->firstClusterIndex=currentClusterIndex;

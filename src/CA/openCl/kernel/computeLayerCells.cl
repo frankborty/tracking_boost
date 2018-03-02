@@ -93,13 +93,6 @@ int myMax(int a,int b){
 	return b;
 }
 
-double myAbs(double iNum){
-	if(iNum<0)
-		return -1*iNum;
-	return iNum;
-}
-
-
 
 int getZBinIndex(int layerIndex, float zCoordinate){
 	return (zCoordinate + LayersZCoordinate[layerIndex])* InverseZBinSize[layerIndex];
@@ -175,12 +168,13 @@ __kernel void countLayerCells(
 	const int currentTrackletIndex=get_global_id(0);
 	const Float3Struct primaryVertex = *fPrimaryVertex;
 	int iLayer=*iCurrentLayer;
+	if (currentTrackletIndex >= iLayerTrackletSize[iLayer])
+		return; 
 	int itmp=0;
 	int trackletCellsNum = 0;
 	iCellsPerTrackletPreviousLayer[currentTrackletIndex]=0;
 	
-	if (currentTrackletIndex >= iLayerTrackletSize[iLayer])
-		return; 
+	
 	
 	TrackletStruct currentTracklet=currentLayerTracklets[currentTrackletIndex];
 	int nextLayerClusterIndex=currentTracklet.secondClusterIndex;
@@ -217,7 +211,7 @@ __kernel void countLayerCells(
 			float deltaPhi=fabs(currentTracklet.phiCoordinate - nextTracklet.phiCoordinate);
 
 			if (deltaTanLambda < CellMaxDeltaTanLambdaThreshold && (deltaPhi < CellMaxDeltaPhiThreshold
-				|| myAbs(deltaPhi - TwoPi) < CellMaxDeltaPhiThreshold)) {
+				|| fabs(deltaPhi - TwoPi) < CellMaxDeltaPhiThreshold)) {
 
 				float averageTanLambda= 0.5f * (currentTracklet.tanLambda + nextTracklet.tanLambda) ;
 
@@ -243,7 +237,7 @@ __kernel void countLayerCells(
 
 
 
-					if (!(vectorNorm < FloatMinThreshold || myAbs(cellPlaneNormalVector.z) < FloatMinThreshold)) {
+					if (!(vectorNorm < FloatMinThreshold || fabs(cellPlaneNormalVector.z) < FloatMinThreshold)) {
 						float inverseVectorNorm = 1.0f / vectorNorm ;
 
 						Float3Struct normalizedPlaneVector = {cellPlaneNormalVector.x * inverseVectorNorm, cellPlaneNormalVector.y
@@ -350,18 +344,18 @@ __kernel void computeLayerCells(
 			
 			__global TrackletStruct* nextTracklet=&nextLayerTracklets[iNextLayerTracklet];
 
-			const float deltaTanLambda=myAbs(currentTracklet->tanLambda - nextTracklet->tanLambda);
+			const float deltaTanLambda=fabs(currentTracklet->tanLambda - nextTracklet->tanLambda);
 
-			const float deltaPhi=myAbs(currentTracklet->phiCoordinate - nextTracklet->phiCoordinate);
+			const float deltaPhi=fabs(currentTracklet->phiCoordinate - nextTracklet->phiCoordinate);
 
 			if (deltaTanLambda < CellMaxDeltaTanLambdaThreshold && (deltaPhi < CellMaxDeltaPhiThreshold
-				|| myAbs(deltaPhi - TwoPi) < CellMaxDeltaPhiThreshold)) {
+				|| fabs(deltaPhi - TwoPi) < CellMaxDeltaPhiThreshold)) {
 
 				const float averageTanLambda= 0.5f * (currentTracklet->tanLambda + nextTracklet->tanLambda) ;
 
 				const float directionZIntersection=-averageTanLambda * firstCellCluster->rCoordinate+ firstCellCluster->zCoordinate ;
 
-				const float deltaZ=myAbs(directionZIntersection - primaryVertex.z) ;
+				const float deltaZ=fabs(directionZIntersection - primaryVertex.z) ;
 
 				if (deltaZ < CellMaxDeltaZThreshold[iLayer]) {
 
@@ -381,7 +375,7 @@ __kernel void computeLayerCells(
 
 
 
-					if (!(vectorNorm < FloatMinThreshold || myAbs(cellPlaneNormalVector.z) < FloatMinThreshold)) {
+					if (!(vectorNorm < FloatMinThreshold || fabs(cellPlaneNormalVector.z) < FloatMinThreshold)) {
 						const float inverseVectorNorm = 1.0f / vectorNorm ;
 
 						const Float3Struct normalizedPlaneVector = {cellPlaneNormalVector.x * inverseVectorNorm, cellPlaneNormalVector.y
@@ -407,7 +401,7 @@ __kernel void computeLayerCells(
 							* normalizedPlaneVector.y / normalizedPlaneVector.z };
 
 
-						const float distanceOfClosestApproach = myAbs(
+						const float distanceOfClosestApproach = fabs(
 							cellTrajectoryRadius - sqrt(circleCenter.x * circleCenter.x + circleCenter.y * circleCenter.y)) ;
 
 
