@@ -305,7 +305,7 @@ __kernel void computeLayerCells(
 		return; 
 	int itmp=0;
 	int trackletCellsNum = 0;
-	iCellsPerTrackletPreviousLayer[currentTrackletIndex]=0;
+	
 	int currentLookUpValue=iCellsPerTrackletPreviousLayer[currentTrackletIndex];
 	int nextLookUpValue=iCellsPerTrackletPreviousLayer[currentTrackletIndex+1];
 	int numberOfCellsToFind=nextLookUpValue-currentLookUpValue;

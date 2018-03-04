@@ -252,37 +252,16 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
   roads.reserve(verticesNum);
 
   for (int iVertex { 0 }; iVertex < verticesNum; ++iVertex) {
-	  t1=clock();
     mPrimaryVertexContext.initialize(event, iVertex);
-    t2=clock();
-	float diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
-	std::cout << std::setw(2) << " - Initialization completed in: " << diff << "ms" << std::endl;
 
-#ifdef PRINT_CLUSTERS
-    std::ofstream outfile;
-	outfile.open("/home/frank/Scrivania/clusterOCL.txt", std::ios_base::app);
-	outfile<<"clusterId\tindexTableBinIndex\tphiCoordinate\talphaAngle\n";
-	for(int i=0;i<7;i++){
-		outfile<<"Layer #"<<i<<"\n";
-		int size=mPrimaryVertexContext.mGPUContext.iClusterSize[i];
-		for(int j=0;j<size;j++){
-			ClusterStruct c=mPrimaryVertexContext.mGPUContext.mClusters[i][j];
-			outfile<<"["<<j<<"]"<<c.clusterId<<"\t"<<c.indexTableBinIndex<<"\t"<<c.phiCoordinate<<"\t"<<c.alphaAngle<<"\n";
-		}
-		outfile<<"\n\n";
-	}
-	outfile.close();
-
-#endif
-
-	evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
-	evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");
-  /*  findCellsNeighbours();
+	computeTracklets();
+	computeCells();
+    findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
-*/
+
   }
 
   return roads;
@@ -308,7 +287,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
 
     evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
     evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");
-/*    evaluateTask(&Tracker<IsGPU>::findCellsNeighbours, "Neighbours Finding");
+    evaluateTask(&Tracker<IsGPU>::findCellsNeighbours, "Neighbours Finding");
     evaluateTask(&Tracker<IsGPU>::findTracks, "Tracks Finding");
     evaluateTask(&Tracker<IsGPU>::computeMontecarloLabels, "Computing Montecarlo Labels");
 
@@ -317,7 +296,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     std::cout << std::setw(2) << " - Vertex " << iVertex + 1 << " completed in: " << diff << "ms" << std::endl;
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
-*/
+
   }
 
   return roads;
@@ -375,7 +354,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksMemoryBenchmark(
     }
 
     memoryBenchmarkOutputStream << std::endl;
-/*
+
     findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
@@ -383,7 +362,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksMemoryBenchmark(
     roads.emplace_back(mPrimaryVertexContext.getRoads());
 
     memoryBenchmarkOutputStream << mPrimaryVertexContext.getRoads().size() << std::endl;
-  */}
+  }
 
   return roads;
 }
@@ -412,14 +391,14 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksTimeBenchmark(
 
     total += evaluateTask(&Tracker<IsGPU>::computeTracklets, nullptr, timeBenchmarkOutputStream);
     total += evaluateTask(&Tracker<IsGPU>::computeCells, nullptr, timeBenchmarkOutputStream);
-/*    total += evaluateTask(&Tracker<IsGPU>::findCellsNeighbours, nullptr, timeBenchmarkOutputStream);
+    total += evaluateTask(&Tracker<IsGPU>::findCellsNeighbours, nullptr, timeBenchmarkOutputStream);
     total += evaluateTask(&Tracker<IsGPU>::findTracks, nullptr, timeBenchmarkOutputStream);
     total += evaluateTask(&Tracker<IsGPU>::computeMontecarloLabels, nullptr, timeBenchmarkOutputStream);
 
     timeBenchmarkOutputStream << total << std::endl;
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
-*/
+
   }
 
   return roads;

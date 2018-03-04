@@ -18,12 +18,7 @@
 # include "ITSReconstruction/CA/gpu/Utils.h"
 #endif
 
-#if TRACKINGITSU_OCL_MODE
-#include "ITSReconstruction/CA/gpu/Context.h"
-#endif
-
 using namespace o2::ITS::CA;
-
 
 std::string getDirectory(const std::string& fname)
 {
@@ -31,20 +26,8 @@ std::string getDirectory(const std::string& fname)
   return (std::string::npos == pos) ? "" : fname.substr(0, pos + 1);
 }
 
-
-
 int main(int argc, char** argv)
 {
-
-
-#if TRACKINGITSU_OCL_MODE
-	std::cout<<">> OCL"<<std::endl;
-#elif TRACKINGITSU_CUDA_MODE
-	std::cout<<">> CUDA"<<std::endl;
-#else
-	std::cout<<">> CPU"<<std::endl;
-#endif
-
   if (argv[1] == NULL) {
 
     std::cerr << "Please, provide a data file." << std::endl;
@@ -66,7 +49,7 @@ int main(int argc, char** argv)
 
     verticesNum += events[iEvent].getPrimaryVerticesNum();
   }
-  std::cout<<"Fine lettura file"<<std::endl;
+
   if (argv[2] != NULL) {
 
     std::string labelsFileName(argv[2]);
@@ -98,6 +81,7 @@ int main(int argc, char** argv)
 #endif
 
   for (size_t iEvent = 0; iEvent < events.size(); ++iEvent) {
+
     Event& currentEvent = events[iEvent];
     std::cout << "Processing event " << iEvent + 1 << std::endl;
 
@@ -132,7 +116,7 @@ int main(int argc, char** argv)
         minTime = diff;
       if (maxTime < diff)
         maxTime = diff;
-/*
+
       for(int iVertex = 0; iVertex < currentEvent.getPrimaryVerticesNum(); ++iVertex) {
 
         std::cout << "Found " << roads[iVertex].size() << " roads for vertex " << iVertex + 1 << std::endl;
@@ -152,7 +136,7 @@ int main(int argc, char** argv)
         IOUtils::writeRoadsReport(correctRoadsOutputStream, duplicateRoadsOutputStream, fakeRoadsOutputStream, roads,
             labelsMap[iEvent]);
       }
-*/
+
     } catch (std::exception& e) {
 
       std::cout << e.what() << std::endl;
@@ -170,4 +154,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-

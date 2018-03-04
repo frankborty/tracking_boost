@@ -150,7 +150,7 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	}
 	for (int iLayer { 0 }; iLayer < Constants::ITS::CellsPerRoad - 1; ++iLayer) {
 		mCellsNeighbours[iLayer].clear();
-	  }
+	}
 	mRoads.clear();
 
 	mGPUContext.bClustersSize=cl::Buffer(
