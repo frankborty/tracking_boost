@@ -89,7 +89,8 @@ class PrimaryVertexContext
       public:
         std::array<std::vector<Cell>, Constants::ITS::CellsPerRoad> mCells;
         std::array<std::vector<int>, Constants::ITS::CellsPerRoad - 1> mCellsLookupTable;
-#elif
+#else
+        std::array<std::vector<Cell>, Constants::ITS::CellsPerRoad> mCells;
         std::array<std::vector<int>, Constants::ITS::CellsPerRoad - 1> mCellsLookupTable;
 #endif
         std::array<std::vector<std::vector<int>>, Constants::ITS::CellsPerRoad - 1> mCellsNeighbours;

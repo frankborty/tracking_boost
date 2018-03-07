@@ -51,7 +51,6 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 			(void *) &(mGPUContext.mPrimaryVertex));
 
 	//clusters
-//	t1=clock();
 	for (int iLayer { 0 }; iLayer < Constants::ITS::LayersNumber; ++iLayer) {
 		const Layer& currentLayer { event.getLayer(iLayer) };
 		const int clustersNum { currentLayer.getClustersSize() };

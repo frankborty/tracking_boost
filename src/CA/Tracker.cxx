@@ -14,26 +14,13 @@
 
 //#define PRINT_CLUSTERS
 //#define PRINT_TRACKLET
-#include "ITSReconstruction/CA/Tracker.h"
 
-#include <array>
-#include <cmath>
-#include <ctime>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-
-#include "ITSReconstruction/CA/Cell.h"
-#include "ITSReconstruction/CA/Constants.h"
-#include "ITSReconstruction/CA/Definitions.h"
-#include "ITSReconstruction/CA/Event.h"
-#include "ITSReconstruction/CA/IndexTableUtils.h"
-#include "ITSReconstruction/CA/Layer.h"
-#include "ITSReconstruction/CA/MathUtils.h"
-#include "ITSReconstruction/CA/PrimaryVertexContext.h"
-#include "ITSReconstruction/CA/Tracklet.h"
-#include "ITSReconstruction/CA/TrackingUtils.h"
+#include <ITSReconstruction/CA/Cell.h>
+#include <ITSReconstruction/CA/Constants.h>
+#include <ITSReconstruction/CA/Tracker.h>
+#include <sys/time.h>
+#include <chrono>
+#include <vector>
 
 namespace o2
 {
@@ -87,10 +74,11 @@ void TrackerTraits<false>::computeLayerTracklets(PrimaryVertexContext& primaryVe
         const int firstRowClusterIndex = primaryVertexContext.getIndexTables()[iLayer][firstBinIndex];
         const int maxRowClusterIndex = primaryVertexContext.getIndexTables()[iLayer][maxBinIndex];
 
-        for (int iNextLayerCluster { firstRowClusterIndex }; iNextLayerCluster <= maxRowClusterIndex;
+        for (int iNextLayerCluster { firstRowClusterIndex }; iNextLayerCluster < maxRowClusterIndex;	//forse basta togliere  "=" al maxRowClusterIndex
             ++iNextLayerCluster) {
-
-          const Cluster& nextCluster { primaryVertexContext.getClusters()[iLayer + 1][iNextLayerCluster] };
+        	/*if(iNextLayerCluster >= (int)primaryVertexContext.getClusters()[iLayer+1].size())
+        		break;*/
+        	const Cluster& nextCluster { primaryVertexContext.getClusters()[iLayer + 1][iNextLayerCluster] };
 
           const float deltaZ { MATH_ABS(
               tanLambda * (nextCluster.rCoordinate - currentCluster.rCoordinate) + currentCluster.zCoordinate
@@ -111,6 +99,8 @@ void TrackerTraits<false>::computeLayerTracklets(PrimaryVertexContext& primaryVe
 
             primaryVertexContext.getTracklets()[iLayer].emplace_back(iCluster, iNextLayerCluster, currentCluster,
                 nextCluster);
+
+
           }
         }
       }
@@ -246,7 +236,6 @@ Tracker<IsGPU>::Tracker()
 template<bool IsGPU>
 std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& event)
 {
-	time_t t1,t2;
   const int verticesNum { event.getPrimaryVerticesNum() };
   std::vector<std::vector<Road>> roads { };
   roads.reserve(verticesNum);
@@ -276,14 +265,15 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
 
   for (int iVertex { 0 }; iVertex < verticesNum; ++iVertex) {
 
-    clock_t t1 { }, t2 { };
-    float diff { };
 
-    t1 = clock();
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
     mPrimaryVertexContext.initialize(event, iVertex);
-    t2 = clock();
-    diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
-    std::cout << std::setw(2) << " - Context initialized in: " << diff << "ms" << std::endl;
+    end = std::chrono::system_clock::now();
+    int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+   ;
+
+    std::cout << " - Elapsed: " << elapsed_seconds << "ms" << std::endl;
 
     evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
     evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");
@@ -291,9 +281,9 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     evaluateTask(&Tracker<IsGPU>::findTracks, "Tracks Finding");
     evaluateTask(&Tracker<IsGPU>::computeMontecarloLabels, "Computing Montecarlo Labels");
 
-    t2 = clock();
-    diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
-    std::cout << std::setw(2) << " - Vertex " << iVertex + 1 << " completed in: " << diff << "ms" << std::endl;
+    end = std::chrono::system_clock::now();
+    elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    std::cout  << " - Vertex " << iVertex + 1 << " completed in: " << elapsed_seconds << "ms" << std::endl;
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
 
@@ -376,18 +366,14 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksTimeBenchmark(
   roads.reserve(verticesNum);
 
   for (int iVertex = 0; iVertex < verticesNum; ++iVertex) {
-
-    clock_t t1, t2;
-    float diff, total = .0f;
-
-    t1 = clock();
-
+	int  total = 0;
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
     mPrimaryVertexContext.initialize(event, iVertex);
-
-    t2 = clock();
-    diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
-    total += diff;
-    timeBenchmarkOutputStream << diff << "\t";
+    end = std::chrono::system_clock::now();
+	int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    total += elapsed_seconds;
+    timeBenchmarkOutputStream << elapsed_seconds << "\t";
 
     total += evaluateTask(&Tracker<IsGPU>::computeTracklets, nullptr, timeBenchmarkOutputStream);
     total += evaluateTask(&Tracker<IsGPU>::computeCells, nullptr, timeBenchmarkOutputStream);
@@ -664,26 +650,26 @@ template<bool IsGPU>
 float Tracker<IsGPU>::evaluateTask(void (Tracker<IsGPU>::*task)(void), const char *taskName,
     std::ostream& ostream)
 {
-  clock_t t1, t2;
-  float diff;
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
 
-  t1 = clock();
+
 
   (this->*task)();
 
-  t2 = clock();
-  diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
+  end = std::chrono::system_clock::now();
+  int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
 
   if (taskName == nullptr) {
 
-    ostream << diff << "\t";
+    ostream << elapsed_seconds << "\t";
 
   } else {
 
-    ostream << std::setw(2) << " - " << taskName << " completed in: " << diff << "ms" << std::endl;
+    ostream << std::setw(2) << " - " << taskName << " completed in: " << elapsed_seconds << "ms" << std::endl;
   }
 
-  return diff;
+  return elapsed_seconds;
 }
 
 template class Tracker<TRACKINGITSU_GPU_MODE> ;
