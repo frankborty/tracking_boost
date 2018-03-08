@@ -37,9 +37,9 @@ if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 	include_directories( ${OpenCl_INCLUDE_DIRS} ${TRACKING-ITSU_SOURCE_DIR}/include/ITSReconstruction/CA/openCl ${TRACKING-ITSU_SOURCE_DIR}/src)
 
 
-	find_package(Boost REQUIRED)
-	include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-	message(${Boost_INCLUDE_DIRS})
+	#find_package(Boost REQUIRED)
+	include_directories(SYSTEM ${TRACKING-ITSU_SOURCE_DIR}/include)
+	#message(${Boost_INCLUDE_DIRS})
 
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 	
