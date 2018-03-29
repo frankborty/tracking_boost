@@ -81,9 +81,13 @@ class PrimaryVertexContext
         std::array<std::vector<Tracklet>, Constants::ITS::TrackletsPerRoad>& getTracklets();
         std::array<std::vector<int>, Constants::ITS::CellsPerRoad>& getTrackletsLookupTable();
 #endif
-      private:
+      public:
         float3 mPrimaryVertex;
         std::array<std::vector<Cluster>, Constants::ITS::LayersNumber> mClusters;
+        std::array<std::array<int, Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins + 1>,
+                    Constants::ITS::TrackletsPerRoad> mIndexTables;
+        std::array<std::vector<Tracklet>, Constants::ITS::TrackletsPerRoad> mTracklets;
+        std::array<std::vector<int>, Constants::ITS::CellsPerRoad> mTrackletsLookupTable;
         //std::array<std::vector<Cell>, Constants::ITS::CellsPerRoad> mCells;
 #if TRACKINGITSU_OCL_MODE
       public:
@@ -103,6 +107,7 @@ class PrimaryVertexContext
         std::array<GPU::Vector<int>, Constants::ITS::CellsPerRoad> mTempTableArray;
         std::array<GPU::Vector<Tracklet>, Constants::ITS::CellsPerRoad> mTempTrackletArray;
         std::array<GPU::Vector<Cell>, Constants::ITS::CellsPerRoad - 1> mTempCellArray;
+
 #elif TRACKINGITSU_OCL_MODE
       public:
         GPU::PrimaryVertexContext mGPUContext;

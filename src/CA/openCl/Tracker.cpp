@@ -81,10 +81,8 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 {
 	int iClustersNum;
 	int *firstLayerLookUpTable;
-	int* trackletsFound;
-	cl::Buffer bTrackletLookUpTable;
-	cl::Kernel oclCountTrackletKernel=GPU::Context::getInstance().getDeviceProperties().oclCountTrackletKernel;
-	cl::Kernel oclComputeTrackletKernel=GPU::Context::getInstance().getDeviceProperties().oclComputeTrackletKernel;
+	compute::buffer boostTrackletLookUpTable;
+
 	int workgroupSize=5*32;	//tmp value
 	try{
 		cl::Context oclContext=GPU::Context::getInstance().getDeviceProperties().oclContext;
@@ -92,13 +90,14 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 		cl::CommandQueue oclCommandQueue=GPU::Context::getInstance().getDeviceProperties().oclQueue;
 
 	//boost_compute
-		compute::device device = compute::device(oclDevice(),true);
-		compute::context ctx(oclContext(),true);
-		compute::command_queue queue(ctx, device);
+		compute::device boostDevice = GPU::Context::getInstance().getBoostDeviceProperties().boostDevice;
+		compute::context boostContext= GPU::Context::getInstance().getBoostDeviceProperties().boostContext;
+		compute::command_queue boostQueue =GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueue;
+		compute::kernel countTrackletKernel=GPU::Context::getInstance().getBoostDeviceProperties().countTrackletsBoostKernel;
 	///
 
 
-		iClustersNum=primaryVertexContext.mGPUContext.iClusterSize[0];
+		iClustersNum=primaryVertexContext.mClusters[0].size();
 
 		if((iClustersNum % workgroupSize)!=0){
 			int mult=iClustersNum/workgroupSize;
@@ -108,13 +107,31 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 
 		firstLayerLookUpTable=(int*)malloc(iClustersNum*sizeof(int));
 		memset(firstLayerLookUpTable,-1,iClustersNum*sizeof(int));
-		bTrackletLookUpTable = cl::Buffer(
-				oclContext,
-				(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+		boostTrackletLookUpTable = compute::buffer(
+				boostContext,
 				iClustersNum*sizeof(int),
+				(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 				(void *) &firstLayerLookUpTable[0]);
 
 
+		for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer){
+			countTrackletKernel.set_arg(0,primaryVertexContext.mGPUContext.boostPrimaryVertex);
+			countTrackletKernel.set_arg(1,primaryVertexContext.mGPUContext.boostClusters[iLayer]);
+			countTrackletKernel.set_arg(2,primaryVertexContext.mGPUContext.boostClusters[iLayer+1]);
+			countTrackletKernel.set_arg(3,primaryVertexContext.mGPUContext.boostIndexTables[iLayer]);
+			countTrackletKernel.set_arg(4,primaryVertexContext.mGPUContext.boostLayerIndex[iLayer]);
+			countTrackletKernel.set_arg(5,primaryVertexContext.mGPUContext.boostClusterSize);
+			if(iLayer==0)
+				countTrackletKernel.set_arg(6, boostTrackletLookUpTable);
+			else
+				countTrackletKernel.set_arg(6, primaryVertexContext.mGPUContext.boostTrackletsLookupTable[iLayer-1]);
+
+
+			boostQueue.enqueue_1d_range_kernel(countTrackletKernel,0,1,1);
+			boostQueue.finish();
+		}
+
+/*
 		for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer) {
 			iClustersNum=primaryVertexContext.mGPUContext.iClusterSize[iLayer];
 			oclCountTrackletKernel.setArg(0, primaryVertexContext.mGPUContext.bPrimaryVertex);
@@ -122,12 +139,12 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 			oclCountTrackletKernel.setArg(2, primaryVertexContext.mGPUContext.bClusters[iLayer+1]);
 			oclCountTrackletKernel.setArg(3, primaryVertexContext.mGPUContext.bIndexTables[iLayer]);
 			oclCountTrackletKernel.setArg(4, primaryVertexContext.mGPUContext.bLayerIndex[iLayer]);
-			oclCountTrackletKernel.setArg(5, primaryVertexContext.mGPUContext.bTrackletsFoundForLayer);
-			oclCountTrackletKernel.setArg(6, primaryVertexContext.mGPUContext.bClustersSize);
+			//oclCountTrackletKernel.setArg(5, primaryVertexContext.mGPUContext.bTrackletsFoundForLayer);
+			oclCountTrackletKernel.setArg(5, primaryVertexContext.mGPUContext.bClustersSize);
 			if(iLayer==0)
-				oclCountTrackletKernel.setArg(7, bTrackletLookUpTable);
+				oclCountTrackletKernel.setArg(6, bTrackletLookUpTable);
 			else
-				oclCountTrackletKernel.setArg(7, primaryVertexContext.mGPUContext.bTrackletsLookupTable[iLayer-1]);
+				oclCountTrackletKernel.setArg(6, primaryVertexContext.mGPUContext.bTrackletsLookupTable[iLayer-1]);
 
 			int pseudoClusterNumber=iClustersNum;
 			if((iClustersNum % workgroupSize)!=0){
@@ -166,7 +183,7 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 			compute::copy(lookUpFound, lookUpFound+iClustersNum, device_vector.begin(), queue);
 
 			// sort data on the device
-			compute::exclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),0,queue);
+			compute::inclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),queue);
 			// copy data back to the host
 			compute::copy(device_vector.begin(), device_vector.end(), lookUpFound, queue);
 			bTrackletLookUpTable=cl::Buffer(
@@ -174,7 +191,9 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 				(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 				iClustersNum*sizeof(int),
 				(void *) lookUpFound);
-
+			//for(int j=0;j<iClustersNum;j++)
+				//std::cout<<"["<<j<<"]: "<<lookUpFound[j]<<std::endl;
+			primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer]=lookUpFound[iClustersNum-1];
 
 		}
 		else{
@@ -194,7 +213,7 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 			compute::copy(lookUpFound, lookUpFound+iClustersNum, device_vector.begin(), queue);
 
 			// sort data on the device
-			compute::exclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),0,queue);
+			compute::inclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),queue);
 			// copy data back to the host
 			compute::copy(device_vector.begin(), device_vector.end(), lookUpFound, queue);
 
@@ -203,21 +222,20 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 				(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 				iClustersNum*sizeof(int),
 				(void *) lookUpFound);
+			//for(int j=0;j<iClustersNum;j++)
+				//std::cout<<"["<<j<<"]: "<<lookUpFound[j]<<std::endl;
+			primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer]=lookUpFound[iClustersNum-1];
 
 		}
 	}
 
+	primaryVertexContext.mGPUContext.bTrackletsFoundForLayer=cl::Buffer(
+			oclContext,
+			(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+			o2::ITS::CA::Constants::ITS::TrackletsPerRoad*sizeof(int),
+			(void *) primaryVertexContext.mGPUContext.iTrackletFoundPerLayer);
 
-	trackletsFound = (int *) oclCommandQueue.enqueueMapBuffer(
-			primaryVertexContext.mGPUContext.bTrackletsFoundForLayer,
-			CL_TRUE, // block
-			CL_MAP_READ,
-			0,
-			Constants::ITS::TrackletsPerRoad*sizeof(int)
-	);
-	for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++){
-		primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[i]=trackletsFound[i];
-	}
+
 
 	//calcolo le tracklet
 	for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer) {
@@ -228,12 +246,12 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 		oclComputeTrackletKernel.setArg(3, primaryVertexContext.mGPUContext.bIndexTables[iLayer]);
 		oclComputeTrackletKernel.setArg(4, primaryVertexContext.mGPUContext.bTracklets[iLayer]);
 		oclComputeTrackletKernel.setArg(5, primaryVertexContext.mGPUContext.bLayerIndex[iLayer]);
-		oclComputeTrackletKernel.setArg(6, primaryVertexContext.mGPUContext.bTrackletsFoundForLayer);
-		oclComputeTrackletKernel.setArg(7, primaryVertexContext.mGPUContext.bClustersSize);
+		//oclComputeTrackletKernel.setArg(6, primaryVertexContext.mGPUContext.bTrackletsFoundForLayer);
+		oclComputeTrackletKernel.setArg(6, primaryVertexContext.mGPUContext.bClustersSize);
 		if(iLayer==0)
-			oclComputeTrackletKernel.setArg(8, bTrackletLookUpTable);
+			oclComputeTrackletKernel.setArg(7, bTrackletLookUpTable);
 		else
-			oclComputeTrackletKernel.setArg(8, primaryVertexContext.mGPUContext.bTrackletsLookupTable[iLayer-1]);
+			oclComputeTrackletKernel.setArg(7, primaryVertexContext.mGPUContext.bTrackletsLookupTable[iLayer-1]);
 
 		int pseudoClusterNumber=iClustersNum;
 		if((iClustersNum % workgroupSize)!=0){
@@ -254,11 +272,14 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 
 	for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer)
 		GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
-
+*/
+	}catch (std::exception& e) {
+			std::cout<<e.what()<<std::endl;
+			throw std::runtime_error { e.what() };
 
 	}catch (...) {
 		std::cout<<"Exception during compute tracklet phase"<<std::endl;
-		throw std::runtime_error { "Exception during compute cells phase" };
+		throw std::runtime_error { "Exception during compute tracklet phase" };
 	}
 }
 
@@ -267,7 +288,7 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 {
 	int iTrackletsNum;
 	int *firstLayerLookUpTable;
-	int *cellsFound;
+	int cellsFound[Constants::ITS::CellsPerRoad];
 	cl::Buffer bCellLookUpTable;
 	cl::Kernel oclCountCellKernel=GPU::Context::getInstance().getDeviceProperties().oclCountCellKernel;
 	cl::Kernel oclComputeCellKernel=GPU::Context::getInstance().getDeviceProperties().oclComputeCellKernel;
@@ -298,7 +319,6 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 			pseudoTracletsNumber*sizeof(int),
 			(void *) &firstLayerLookUpTable[0]);
 
-
 		for (int iLayer { 0 }; iLayer < Constants::ITS::CellsPerRoad;++iLayer) {
 			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 			oclCountCellKernel.setArg(0, primaryVertexContext.mGPUContext.bPrimaryVertex);  //0 fPrimaryVertex
@@ -315,7 +335,7 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 				oclCountCellKernel.setArg(9, bCellLookUpTable);//9iCellsPerTrackletPreviousLayer;
 			else
 				oclCountCellKernel.setArg(9, primaryVertexContext.mGPUContext.bCellsLookupTable[iLayer-1]);//9iCellsPerTrackletPreviousLayer
-			oclCountCellKernel.setArg(10, primaryVertexContext.mGPUContext.bCellsFoundForLayer);
+			//oclCountCellKernel.setArg(10, primaryVertexContext.mGPUContext.bCellsFoundForLayer);
 
 
 			int pseudoTrackletsNumber=primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer];
@@ -335,20 +355,14 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 
 		delete []firstLayerLookUpTable;
 
+		for (int iLayer { 0 }; iLayer<Constants::ITS::CellsPerRoad; ++iLayer)
+			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
+
 
 		//scan
 		for (int iLayer { 0 }; iLayer<Constants::ITS::CellsPerRoad; ++iLayer) {
 			iTrackletsNum=primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer];
-			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
-
-			cellsFound = (int *) GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].enqueueMapBuffer(
-					primaryVertexContext.mGPUContext.bCellsFoundForLayer,
-					CL_TRUE, // block
-					CL_MAP_READ,
-					0,
-					5*sizeof(int)
-			);
-
+			//GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 
 			if(iLayer==0){
 				int* lookUpFound = (int *) GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].enqueueMapBuffer(
@@ -366,7 +380,7 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 				compute::copy(lookUpFound, lookUpFound+iTrackletsNum, device_vector.begin(), queue);
 
 				// sort data on the device
-				compute::exclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),0,queue);
+				compute::inclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),queue);
 				// copy data back to the host
 				compute::copy(device_vector.begin(), device_vector.end(), lookUpFound, queue);
 				bCellLookUpTable=cl::Buffer(
@@ -374,8 +388,8 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 					(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 					iTrackletsNum*sizeof(int),
 					(void *) lookUpFound);
-
-
+				//std::cout<<"["<<iLayer<<"]: "<<lookUpFound[iTrackletsNum-1]<<std::endl;
+				cellsFound[iLayer]=lookUpFound[iTrackletsNum-1];
 			}
 			else{
 
@@ -394,7 +408,7 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 				compute::copy(lookUpFound, lookUpFound+iTrackletsNum, device_vector.begin(), queue);
 
 				// sort data on the device
-				compute::exclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),0,queue);
+				compute::inclusive_scan(device_vector.begin(),device_vector.end(),device_vector.begin(),queue);
 				// copy data back to the host
 				compute::copy(device_vector.begin(), device_vector.end(), lookUpFound, queue);
 
@@ -403,8 +417,13 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 					(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 					iTrackletsNum*sizeof(int),
 					(void *) lookUpFound);
+				//std::cout<<"["<<iLayer<<"]: "<<lookUpFound[iTrackletsNum-1]<<std::endl;
+				cellsFound[iLayer]=lookUpFound[iTrackletsNum-1];
+
 			}
 		}
+
+
 
 		//compute cells
 		//std::cout<<"calcolo le cells"<<std::endl;
@@ -426,7 +445,6 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 			else
 				oclComputeCellKernel.setArg(9, primaryVertexContext.mGPUContext.bCellsLookupTable[iLayer-1]);//9 iCellsPerTrackletPreviousLayer
 			oclComputeCellKernel.setArg(10, primaryVertexContext.mGPUContext.bCells[iLayer]);	//10
-			//std::cout<<"fine caricamento parametri"<<std::endl;
 
 			int pseudoTrackersNumber=primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer];
 			if((pseudoTrackersNumber % workgroupSize)!=0){
@@ -441,8 +459,8 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 
 
 		}
+
 		for(int iLayer=0;iLayer<Constants::ITS::CellsPerRoad;iLayer++){
-			//std::cout<<"Cell found starting from layer #"<<iLayer<<"	total:"<<cellsFound[iLayer]<<"\n";
 			GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].finish();
 			CellStruct* mCells = (CellStruct *) GPU::Context::getInstance().getDeviceProperties().oclCommandQueues[iLayer].enqueueMapBuffer(
 				primaryVertexContext.mGPUContext.bCells[iLayer],
@@ -453,18 +471,7 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 			);
 
 			for(int j {0};j<cellsFound[iLayer];j++){
-				float3 normalVectorCoordinates;
-				normalVectorCoordinates.x=mCells[j].mNormalVectorCoordinates.x;
-				normalVectorCoordinates.y=mCells[j].mNormalVectorCoordinates.y;
-				normalVectorCoordinates.z=mCells[j].mNormalVectorCoordinates.z;
-				primaryVertexContext.getCells()[iLayer].emplace_back(
-						mCells[j].mFirstClusterIndex,
-						mCells[j].mSecondClusterIndex,
-						mCells[j].mThirdClusterIndex,
-						mCells[j].mFirstTrackletIndex,
-						mCells[j].mSecondTrackletIndex,
-						normalVectorCoordinates,
-						mCells[j].mCurvature);
+				primaryVertexContext.getCells()[iLayer].emplace_back(mCells[j]);
 			}
 			if(iLayer>0){
 				int trackletsNum=primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer];
@@ -476,18 +483,20 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 						trackletsNum*sizeof(int)
 				);
 				if(iLayer>=1){
-					for(int j {0};j<trackletsNum;j++){
+					for(int j {1};j<trackletsNum;j++){
 						if(lookUpFound[j]!=0){
-							primaryVertexContext.mCellsLookupTable[iLayer-1][j]=lookUpFound[j];
+							primaryVertexContext.mCellsLookupTable[iLayer-1][j]=lookUpFound[j-1];
 						}
+						primaryVertexContext.mCellsLookupTable[iLayer-1][0]=0;
 					}
+
 				}
 			}
 		}
 
+
 	}catch(const cl::Error &err){
 		std::string errString=o2::ITS::CA::GPU::Utils::OCLErr_code(err.err());
-		//std::cout<< errString << std::endl;
 		std::cout << "Allocation failed: " << err.what() << '\n';
 		throw std::runtime_error { errString };
 	}

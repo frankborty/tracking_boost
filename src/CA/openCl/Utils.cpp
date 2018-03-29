@@ -58,6 +58,32 @@ int Utils::roundUp(const int numToRound, const int multiple)
 	return numToRound + multiple - remainder;
 }
 
+compute::kernel Utils::CreateBoostKernelFromFile(compute::context boostContext , compute::device boostDevice, const char* fileName,const char* kernelName){
+
+	compute::kernel kernel;
+	compute::program program;
+	try{
+		std::ifstream kernelFile(fileName, std::ios::in);
+
+
+		std::ostringstream oss;
+		oss << kernelFile.rdbuf();
+
+		std::string srcStdStr = oss.str();
+		program =compute::program::create_with_source(srcStdStr, boostContext);
+		program.build();
+
+		// create the kernel
+		kernel=compute::kernel(program, kernelName);
+	}catch(boost::compute::opencl_error &e){
+		    std::cout << program.build_log() << std::endl;
+	}catch (std::exception& e) {
+		std::cout<<e.what()<<std::endl;
+	}
+	return kernel;
+}
+
+
 cl::Kernel Utils::CreateKernelFromFile(cl::Context oclContext, cl::Device oclDevice, const char* fileName,const char* kernelName){
 	//std::cout << "CreateKernelFromFile: "<<fileName <<"... ";
 	cl::Kernel kernel;

@@ -15,7 +15,7 @@
 #include "ITSReconstruction/CA/Definitions.h"
 #include "ITSReconstruction/CA/gpu/Context.h"
 #include "ITSReconstruction/CA/gpu/Utils.h"
-
+#include "ITSReconstruction/CA/gpu/StructGPUPrimaryVertex.h"
 #define AMD_WAVEFRONT 		0x4043
 #define NVIDIA_WAVEFRONT 	0x4003
 
@@ -38,9 +38,65 @@ Context::Context()
 	std::size_t iPlatformList;
 	std::size_t iTotalDevice=0;
 	int scelta=0;
+	std::vector<compute::device> boostDevicesList;
 
+
+	  clock_t t1, t2;
+	  float totalTime = 0.f;
 	try{
 
+//boost
+	std::cout<<"boost-start"<<std::endl;
+	t1 = clock();
+
+
+
+	boostDevicesList = compute::system::devices();
+	for(int i=0;i<(int)boostDevicesList.size();i++)
+		std::cout<<"["<<i<<"]: "<<boostDevicesList[i].name()<<std::endl;
+	/*std::cout<<"Select device:";
+	std::cin>>scelta;
+	*/
+	mBoostDeviceProperties.boostDevice=boostDevicesList[scelta];
+	mBoostDeviceProperties.boostContext=compute::context(mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+
+	char deviceVendor[255];
+	int warpSize=0;
+	clGetDeviceInfo(mBoostDeviceProperties.boostDevice.id(), CL_DEVICE_VENDOR, sizeof(deviceVendor), deviceVendor, NULL);
+	if(strstr(deviceVendor,"NVIDIA")!=NULL || strstr(deviceVendor,"nvidia")!=NULL || strstr(deviceVendor,"Nvidia")!=NULL){
+		//std::cout<<">> NVIDIA" << std::endl;
+		clGetDeviceInfo(mBoostDeviceProperties.boostDevice.id(), NVIDIA_WAVEFRONT, sizeof(warpSize), &warpSize, NULL);
+	}
+	else if(strstr(deviceVendor,"AMD")!=NULL || strstr(deviceVendor,"amd")!=NULL || strstr(deviceVendor,"Amd")!=NULL){
+		//std::cout<<">> NVIDIA" << std::endl;
+		clGetDeviceInfo(mBoostDeviceProperties.boostDevice.id(), AMD_WAVEFRONT, sizeof(warpSize), &warpSize, NULL);
+	}
+	else{
+		warpSize=128;
+	}
+
+	try{
+	mBoostDeviceProperties.warpSize=warpSize;
+	//mBoostDeviceProperties.computeTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/computeLayerTracklets.cl","computeLayerTracklets");
+	mBoostDeviceProperties.countTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/countLayerTracklets.cl","countLayerTracklets");
+	}catch (std::exception& e) {
+		std::cout<<e.what()<<std::endl;
+		throw std::runtime_error { e.what() };
+	}
+
+
+
+	t2 = clock();
+	totalTime = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
+
+	std::cout<<"boost-endClock: "<<totalTime<<std::endl;
+///////
+
+scelta=0;
+t1 = clock();
+
+std::cout<<"ocl-start"<<std::endl;
 		// Get the list of platform
 		cl::Platform::get(&platformList);
 		iPlatformList=platformList.size();
@@ -81,32 +137,6 @@ Context::Context()
 
 			for(int iDevice=0;iDevice<mDevicesNum;iDevice++){
 
-				std::string name;
-				deviceList[iDevice].getInfo(CL_DEVICE_NAME,&(mDeviceProperties[iTotalDevice].name));
-				std::cout << "	>> Device: " << mDeviceProperties[iTotalDevice].name << std::endl;
-
-				//compute number of compute units (cores)
-				deviceList[iDevice].getInfo(CL_DEVICE_MAX_COMPUTE_UNITS,&(mDeviceProperties[iTotalDevice].maxComputeUnits));
-				//std::cout << "		Compute units: " << mDeviceProperties[iTotalDevice].maxComputeUnits << std::endl;
-
-				//compute max device alloc size
-				deviceList[iDevice].getInfo(CL_DEVICE_MAX_MEM_ALLOC_SIZE,&(mDeviceProperties[iTotalDevice].globalMemorySize));
-				//std::cout << "		Device Max Device Alloc Size: " << mDeviceProperties[iTotalDevice].globalMemorySize << std::endl;
-
-				//compute device global memory size
-				deviceList[iDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE,&(mDeviceProperties[iTotalDevice].globalMemorySize));
-				//std::cout << "		Device Global Memory: " << mDeviceProperties[iTotalDevice].globalMemorySize << std::endl;
-
-				//compute the max number of work-item in a work group executing a kernel (refer to clEnqueueNDRangeKernel)
-				deviceList[iDevice].getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE,&(mDeviceProperties[iTotalDevice].maxWorkGroupSize));
-				//std::cout << "		Max work-group size: " << mDeviceProperties[iTotalDevice].maxWorkGroupSize << std::endl;
-
-				//compute the max work-item dimension
-				deviceList[iDevice].getInfo(CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,&(mDeviceProperties[iTotalDevice].maxWorkItemDimension));
-				//std::cout << "		Max work-item dimension: " << mDeviceProperties[iTotalDevice].maxWorkItemDimension << std::endl;
-
-
-				//get vendor name to obtain the warps size
 				deviceList[iDevice].getInfo(CL_DEVICE_VENDOR,&(mDeviceProperties[iTotalDevice].vendor));
 				//std::cout << "		Device vendor: " << mDeviceProperties[iTotalDevice].vendor << std::endl;
 				if(mDeviceProperties[iTotalDevice].vendor.find("NVIDIA")!=std::string::npos){
@@ -137,12 +167,12 @@ Context::Context()
 			}
 
 		}
-		std::cout<<"total Device: "<<iTotalDevice<<std::endl;
-		for(uint j=0;j<iTotalDevice;j++){
+		//std::cout<<"total Device: "<<iTotalDevice<<std::endl;
+		/*for(uint j=0;j<iTotalDevice;j++){
 			std::cout<<"["<<j<<"]"<<mDeviceProperties[j].name<<std::endl;
 		}
 		std::cout<<"Choose device:";
-		std::cin>>scelta;
+		std::cin>>scelta;*/
 	}
 	catch(const cl::Error &err){
 		std::string errString=Utils::OCLErr_code(err.err());
@@ -152,25 +182,23 @@ Context::Context()
 
 	try{
 		mDeviceProperties[iCurrentDevice].oclQueue=cl::CommandQueue(mDeviceProperties[iCurrentDevice].oclContext, mDeviceProperties[iCurrentDevice].oclDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE|CL_QUEUE_PROFILING_ENABLE );
-
+/*
 		for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++){
 			mDeviceProperties[iCurrentDevice].oclCommandQueues[i]=cl::CommandQueue(mDeviceProperties[iCurrentDevice].oclContext, mDeviceProperties[iCurrentDevice].oclDevice, 0);
 		}
-
-		mDeviceProperties[iCurrentDevice].oclCountTrackletKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/computeLayerTracklets.cl","countLayerTracklets");
-		mDeviceProperties[iCurrentDevice].oclComputeTrackletKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/computeLayerTracklets.cl","computeLayerTracklets");
-		mDeviceProperties[iCurrentDevice].oclCountCellKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/computeLayerCells.cl","countLayerCells");
-		mDeviceProperties[iCurrentDevice].oclComputeCellKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/computeLayerCells.cl","computeLayerCells");
-
-
-
+*/
+		//mDeviceProperties[iCurrentDevice].oclCountTrackletKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/countLayerTracklets.cl","countLayerTracklets");
+		//mDeviceProperties[iCurrentDevice].oclComputeTrackletKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/computeLayerTracklets.cl","computeLayerTracklets");
+		//mDeviceProperties[iCurrentDevice].oclCountCellKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/countLayerCells.cl","countLayerCells");
+		//mDeviceProperties[iCurrentDevice].oclComputeCellKernel=GPU::Utils::CreateKernelFromFile(mDeviceProperties[iCurrentDevice].oclContext,mDeviceProperties[iCurrentDevice].oclDevice,"./src/kernel/computeLayerCells.cl","computeLayerCells");
+		t2 = clock();
+		totalTime = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
+		std::cout<<"ocl-endClock: "<<totalTime<<std::endl;
 	}catch(const cl::Error &err){
 		std::string errString=Utils::OCLErr_code(err.err());
 		//std::cout<< errString << std::endl;
 		throw std::runtime_error { errString };
 	}
-
-
 }
 
 
@@ -185,7 +213,10 @@ const DeviceProperties& Context::getDeviceProperties()
   return getDeviceProperties(iCurrentDevice);
 }
 
-
+const DeviceProperties& Context::getBoostDeviceProperties()
+{
+  return mBoostDeviceProperties;
+}
 
 const DeviceProperties& Context::getDeviceProperties(const int deviceIndex)
 {

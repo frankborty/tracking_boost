@@ -56,19 +56,39 @@ void PrimaryVertexContext::initialize(cl::Context oclContext)
 		sizeof(int),
 		(void *) &(i));
 	}
-	int iTrackletsFoundForLayer[]={0,0,0,0,0,0};
+	/*int iTrackletsFoundForLayer[]={0,0,0,0,0,0};
 	this->bTrackletsFoundForLayer=cl::Buffer(
 		oclContext,
 		(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		o2::ITS::CA::Constants::ITS::TrackletsPerRoad*sizeof(int),
 		(void *) iTrackletsFoundForLayer);
-
-	int iCellsFoundForLayer[]={0,0,0,0,0};
+	 */
+	/*int iCellsFoundForLayer[]={0,0,0,0,0};
 	this->bCellsFoundForLayer=cl::Buffer(
 		oclContext,
 		(cl_mem_flags)CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		o2::ITS::CA::Constants::ITS::CellsPerRoad*sizeof(int),
 		(void *) iCellsFoundForLayer);
+		*/
+}
+
+
+void PrimaryVertexContext::boostInitialize(compute::context boostContext, compute::command_queue boostQueue){
+	for(int i=0;i<o2::ITS::CA::Constants::ITS::TrackletsPerRoad;i++){
+		this-> boostLayerIndex[i]=compute::buffer(boostContext,sizeof(int),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,&(i));
+	}
+
+	for(int i=0;i<o2::ITS::CA::Constants::ITS::LayersNumber;i++){
+		if(this->boostClusters[i].capacity()<=4){
+			this->boostClusters[i]=compute::vector<Cluster>(1,boostContext);
+		}
+	}
+	for(int i=0;i<o2::ITS::CA::Constants::ITS::CellsPerRoad;i++){
+		if(this->boostTrackletsLookupTable[i].capacity()<=4){
+			this->boostTrackletsLookupTable[i]=compute::vector<int>(1,boostContext);
+		}
+	}
+
 }
 
 }

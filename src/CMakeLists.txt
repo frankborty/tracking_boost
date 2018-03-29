@@ -88,6 +88,8 @@ if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 	)
 	configure_file(CA/openCl/kernel/computeLayerTracklets.cl ${CMAKE_CURRENT_BINARY_DIR}/kernel/computeLayerTracklets.cl COPYONLY)
 	configure_file(CA/openCl/kernel/computeLayerCells.cl ${CMAKE_CURRENT_BINARY_DIR}/kernel/computeLayerCells.cl COPYONLY)
+	configure_file(CA/openCl/kernel/countLayerTracklets.cl ${CMAKE_CURRENT_BINARY_DIR}/kernel/countLayerTracklets.cl COPYONLY)
+	configure_file(CA/openCl/kernel/countLayerCells.cl ${CMAKE_CURRENT_BINARY_DIR}/kernel/countLayerCells.cl COPYONLY)
 	include_directories( ${OPENCL_INCLUDE_DIRS} ${TRACKING-ITSU_SOURCE_DIR}/src/CA/openCl/kernel)
 
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)

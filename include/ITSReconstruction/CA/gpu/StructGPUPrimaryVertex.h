@@ -10,12 +10,6 @@
 #include <memory>
 
 #include "ITSReconstruction/CA/Definitions.h"
-/*
-#include "ITSReconstruction/CA/Event.h"
-#include "ITSReconstruction/CA/MathUtils.h"
-#include "ITSReconstruction/CA/PrimaryVertexContext.h"
-#include "ITSReconstruction/CA/Road.h"
-*/
 #include "ITSReconstruction/CA/Constants.h"
 #include "CL/cl.hpp"
 

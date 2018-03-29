@@ -80,6 +80,7 @@ class PrimaryVertexContext
 
 #if TRACKINGITSU_OCL_MODE
       void initialize(cl::Context oclContext);
+      void boostInitialize(compute::context boostContext, compute::command_queue boostQueue);
       void sortClusters(int iLayer);
 
       GPU_DEVICE const Float3Struct* getPrimaryVertex();
@@ -140,6 +141,16 @@ class PrimaryVertexContext
     	 cl::Buffer bCellsLookupTableSize;
 
     	 int *mCellsNeighbours[Constants::ITS::CellsPerRoad - 1]={NULL};
+
+    	 //boost
+    	 compute::buffer boostPrimaryVertex;
+    	 compute::buffer boostClusterSize;
+    	 compute::buffer boostIndexTables[Constants::ITS::TrackletsPerRoad];
+    	 std::array<compute::buffer,Constants::ITS::TrackletsPerRoad> boostLayerIndex;
+    	 std::array<compute::vector<Cluster>, Constants::ITS::LayersNumber> boostClusters;
+    	 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad> boostTrackletsLookupTable;
+
+
 
 #endif
 

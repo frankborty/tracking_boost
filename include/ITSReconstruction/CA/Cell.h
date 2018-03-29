@@ -20,6 +20,9 @@
 
 #include "ITSReconstruction/CA/Definitions.h"
 
+#if TRACKINGITSU_OCL_MODE
+#include "ITSReconstruction/CA/gpu/StructGPUPrimaryVertex.h"
+#endif
 namespace o2
 {
 namespace ITS
@@ -32,6 +35,10 @@ class Cell
   {
     public:
       GPU_DEVICE Cell(const int, const int, const int, const int, const int, const float3&, const float);
+
+#if TRACKINGITSU_OCL_MODE
+      GPU_DEVICE Cell(CellStruct&);
+#endif
 
       int getFirstClusterIndex() const;
       int getSecondClusterIndex() const;

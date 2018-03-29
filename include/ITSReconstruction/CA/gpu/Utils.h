@@ -49,6 +49,7 @@ void gpuStopProfiler();
 int findNearestDivisor(const int numToRound, const int divisor);
 		int roundUp(const int numToRound, const int multiple);
 		char *OCLErr_code (int err_in);
+		compute::kernel CreateBoostKernelFromFile(compute::context boostContext , compute::device boostDevice, const char* fileName,const char* kernelName);
 		cl::Kernel CreateKernelFromFile(cl::Context, cl::Device device, const char* fileName, const char* kernelName);
 #endif
 

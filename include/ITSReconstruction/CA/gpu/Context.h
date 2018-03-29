@@ -21,78 +21,87 @@
 #include "ITSReconstruction/CA/Definitions.h"
 #include "ITSReconstruction/CA/Constants.h"
 
-namespace o2
-{
-namespace ITS
-{
-namespace CA
-{
-namespace GPU
-{
+namespace o2 {
+namespace ITS {
+namespace CA {
+namespace GPU {
 
-struct DeviceProperties final
-{
+struct DeviceProperties final {
 #if TRACKINGITSU_CUDA_MODE
-    std::string name;
-    int gpuProcessors;
-    int cudaCores;
-    long globalMemorySize;
-    long constantMemorySize;
-    long sharedMemorySize;
-    long maxClockRate;
-    int busWidth;
-    long l2CacheSize;
-    long registersPerBlock;
-    int warpSize;
-    int maxThreadsPerBlock;
-    int maxBlocksPerSM;
-    dim3 maxThreadsDim;
-    dim3 maxGridDim;
+	std::string name;
+	int gpuProcessors;
+	int cudaCores;
+	long globalMemorySize;
+	long constantMemorySize;
+	long sharedMemorySize;
+	long maxClockRate;
+	int busWidth;
+	long l2CacheSize;
+	long registersPerBlock;
+	int warpSize;
+	int maxThreadsPerBlock;
+	int maxBlocksPerSM;
+	dim3 maxThreadsDim;
+	dim3 maxGridDim;
 #else
-    std::string name;
-        long globalMemorySize;
-        int warpSize;
+	std::string name;
+	long globalMemorySize;
+	int warpSize;
 
-        std::string vendor;
-        std::size_t maxComputeUnits;
-        std::size_t maxWorkGroupSize;
-        std::size_t maxWorkItemDimension;
-        cl::Context oclContext;
-        cl::Device  oclDevice;
+	std::string vendor;
+	std::size_t maxComputeUnits;
+	std::size_t maxWorkGroupSize;
+	std::size_t maxWorkItemDimension;
+	cl::Context oclContext;
+	cl::Device oclDevice;
+
+	//kernel
+	cl::Kernel oclCountTrackletKernel;
+	cl::Kernel oclComputeTrackletKernel;
+	cl::Kernel oclCountCellKernel;
+	cl::Kernel oclComputeCellKernel;
+
+	//command queues
+	cl::CommandQueue oclQueue;
+	cl::CommandQueue oclCommandQueues[Constants::ITS::TrackletsPerRoad];
+
+	//bost
+	compute::device boostDevice;
+	compute::context boostContext;
+	compute::command_queue boostCommandQueue;
+	compute::kernel countTrackletsBoostKernel;
+	compute::kernel computeTrackletsBoostKernel;
+	compute::kernel countCellsBoostKernel;
+	compute::kernel computeCellsBoostKernel;
 
 
-        //kernel
-        cl::Kernel oclCountTrackletKernel;
-        cl::Kernel oclComputeTrackletKernel;
-        cl::Kernel oclCountCellKernel;
-        cl::Kernel oclComputeCellKernel;
-
-        //command queues
-        cl::CommandQueue oclQueue;
-        cl::CommandQueue oclCommandQueues[Constants::ITS::TrackletsPerRoad];
 #endif
 };
 
-class Context final
-{
-  public:
-    static Context& getInstance();
+class Context final {
+public:
+	static Context& getInstance();
 
-    Context(const Context&);
-    Context& operator=(const Context&);
+	Context(const Context&);
+	Context& operator=(const Context&);
 
-    const DeviceProperties& getDeviceProperties();
-    const DeviceProperties& getDeviceProperties(const int);
+	const DeviceProperties& getDeviceProperties();
+	const DeviceProperties& getBoostDeviceProperties();
+	const DeviceProperties& getDeviceProperties(const int);
 
-  private:
-    Context();
-    ~Context() = default;
+private:
+	Context();
+	~Context() = default;
 
 #ifdef TRACKINGITSU_OCL_MODE
-    int iCurrentDevice;
+	int iCurrentDevice;
+	int mDevicesNum;
+	std::vector<DeviceProperties> mDeviceProperties;
+	DeviceProperties mBoostDeviceProperties;
+#else
+	int mDevicesNum;
+	std::vector<DeviceProperties> mDeviceProperties;
 #endif
-    int mDevicesNum;
-    std::vector<DeviceProperties> mDeviceProperties;
 };
 
 }
