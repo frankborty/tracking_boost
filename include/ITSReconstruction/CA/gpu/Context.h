@@ -68,7 +68,7 @@ struct DeviceProperties final {
 	//bost
 	compute::device boostDevice;
 	compute::context boostContext;
-	compute::command_queue boostCommandQueue;
+	compute::command_queue boostCommandQueue[Constants::ITS::TrackletsPerRoad];
 	compute::kernel countTrackletsBoostKernel;
 	compute::kernel computeTrackletsBoostKernel;
 	compute::kernel countCellsBoostKernel;

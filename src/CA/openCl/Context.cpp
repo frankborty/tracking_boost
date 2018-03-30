@@ -37,7 +37,7 @@ Context::Context()
 	std::string info;
 	std::size_t iPlatformList;
 	std::size_t iTotalDevice=0;
-	int scelta=1;
+	int scelta=0;
 	std::vector<compute::device> boostDevicesList;
 
 
@@ -54,12 +54,17 @@ Context::Context()
 	boostDevicesList = compute::system::devices();
 	for(int i=0;i<(int)boostDevicesList.size();i++)
 		std::cout<<"["<<i<<"]: "<<boostDevicesList[i].name()<<std::endl;
-	/*std::cout<<"Select device:";
+	std::cout<<"Select device:";
 	std::cin>>scelta;
-	*/
+
 	mBoostDeviceProperties.boostDevice=boostDevicesList[scelta];
 	mBoostDeviceProperties.boostContext=compute::context(mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue[0]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue[1]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue[2]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue[3]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue[4]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue[5]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
 
 	char deviceVendor[255];
 	int warpSize=0;
