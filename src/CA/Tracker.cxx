@@ -245,13 +245,13 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
     mPrimaryVertexContext.initialize(event, iVertex);
 
 	computeTracklets();
-/*	computeCells();
-    findCellsNeighbours();
+	computeCells();
+   findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
-*/
+
   }
 
   return roads;
@@ -277,7 +277,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     std::cout << " - Elapsed: " << elapsed_seconds << "ms" << std::endl;
 
     evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
-/*    evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");
+    evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");
     evaluateTask(&Tracker<IsGPU>::findCellsNeighbours, "Neighbours Finding");
     evaluateTask(&Tracker<IsGPU>::findTracks, "Tracks Finding");
     evaluateTask(&Tracker<IsGPU>::computeMontecarloLabels, "Computing Montecarlo Labels");
@@ -287,7 +287,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     std::cout  << " - Vertex " << iVertex + 1 << " completed in: " << elapsed_seconds << "ms" << std::endl;
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
-*/
+
   }
 
   return roads;

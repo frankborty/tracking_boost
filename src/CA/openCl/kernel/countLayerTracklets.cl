@@ -151,7 +151,6 @@ __kernel void countLayerTracklets(
 	
 	int nextLayerClusterVectorSize=iLayerClusterSize[iLayer+1];
 	
-	
 	if(currentClusterIndex>=maxLayerCluster){
 		return;
 	}
@@ -160,9 +159,8 @@ __kernel void countLayerTracklets(
 	
 	if(currentClusterIndex<currentLayerClusterVectorSize){
 		ClusterStruct currentCluster=currentLayerClusters[currentClusterIndex];
-		
+		//printf("[%d] %d\t%d\n",currentClusterIndex,currentCluster.clusterId,currentCluster.indexTableBinIndex);
 		float tanLambda=(currentCluster.zCoordinate-primaryVertex->z)/currentCluster.rCoordinate;
-
 		float directionZIntersection= tanLambda*(LayersRCoordinate[iLayer+1]-currentCluster.rCoordinate)+currentCluster.zCoordinate;
 
 		const Int4Struct selectedBinsRect=getBinsRect(&currentCluster,iLayer,directionZIntersection);
@@ -185,12 +183,11 @@ __kernel void countLayerTracklets(
 		    				break;
 		    		
 		    		  ClusterStruct nextCluster=nextLayerClusters[iNextLayerCluster];
-		    		  	
+		    		 
 		    		  const float deltaZ=fabs(tanLambda * (nextCluster.rCoordinate - currentCluster.rCoordinate) + currentCluster.zCoordinate - nextCluster.zCoordinate);
 		    		  const float deltaPhi=fabs(currentCluster.phiCoordinate - nextCluster.phiCoordinate);
 
 		    		  if (deltaZ < TrackletMaxDeltaZThreshold[iLayer] && (deltaPhi<PhiCoordinateCut || fabs(deltaPhi-TwoPi)<PhiCoordinateCut)){
-		    			  //int iTrackletPosition=atom_inc(&iCurrentTrackletsPosition[iLayer])+1;
 		    			  ++clusterTrackletsNum;
 		    			  
 		    		  }
@@ -205,7 +202,9 @@ __kernel void countLayerTracklets(
   	else{
     	iTrackletsPerClusterTablePreviousLayer[currentClusterIndex] = 0;
   	}	
+
   	
+  
 }
 
 

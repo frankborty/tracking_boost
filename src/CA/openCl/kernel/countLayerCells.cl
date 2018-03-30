@@ -1,6 +1,14 @@
+//============================================================================
+// Name        : KernelTest.cpp
+// Author      : frank
+// Version     :
+// Copyright   : Your copyright notice
+// Description : ComputeLayerCells opencl kernel
+//============================================================================
+
+
 __constant float CellMaxDeltaZThreshold[5]= { 0.2f, 0.4f, 0.5f, 0.6f, 3.0f } ;
 __constant float TrackletMaxDeltaZThreshold[6]= { 0.1f, 0.1f, 0.3f, 0.3f, 0.3f, 0.3f }; //default
-//__constant float TrackletMaxDeltaZThreshold[6]= { 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f };
 __constant int ZBins=20;
 __constant int PhiBins=20;
 __constant float Pi=3.14159265359f;
@@ -9,7 +17,6 @@ __constant int UnusedIndex=-1 ;
 __constant float CellMaxDeltaPhiThreshold=0.14f;
 __constant float CellMaxDeltaTanLambdaThreshold=0.025f;
 __constant float PhiCoordinateCut=0.3f;	//default
-//__constant float PhiCoordinateCut=PHICUT;	//default
 
 __constant float FloatMinThreshold = 1e-20f ;
 __constant float ZCoordinateCut=0.5f;	//default
@@ -81,18 +88,6 @@ __constant float CellMaxDistanceOfClosestApproachThreshold[5]= { 0.05f, 0.04f, 0
 	}VectStruct;
 
 
-int myMin(int a,int b){
-	if(a<b)
-		return a;
-	return b;
-}
-
-int myMax(int a,int b){
-	if(a>b)
-		return a;
-	return b;
-}
-
 
 int getZBinIndex(int layerIndex, float zCoordinate){
 	return (zCoordinate + LayersZCoordinate[layerIndex])* InverseZBinSize[layerIndex];
@@ -126,18 +121,17 @@ Int4Struct getBinsRect(ClusterStruct currentCluster, int layerIndex,float direct
 		return binRect;
 	}
 
-	binRect.x=myMax(0, getZBinIndex(layerIndex + 1, zRangeMin));
+	binRect.x=max(0, getZBinIndex(layerIndex + 1, zRangeMin));
 	binRect.y=getPhiBinIndex(getNormalizedPhiCoordinate(phiRangeMin));
-	binRect.z=myMin(ZBins - 1, getZBinIndex(layerIndex + 1, zRangeMax));
+	binRect.z=min(ZBins - 1, getZBinIndex(layerIndex + 1, zRangeMax));
 	binRect.w=getPhiBinIndex(getNormalizedPhiCoordinate(phiRangeMax));
 	return binRect;
 
 }
 
-
 int getBinIndex(int zIndex,int phiIndex)
 {
-	return myMin(phiIndex * PhiBins + zIndex,ZBins * PhiBins);
+	return min(phiIndex * PhiBins + zIndex,ZBins * PhiBins);
 }
 
 Float3Struct crossProduct(Float3Struct* firstVector,  Float3Struct* secondVector)
@@ -152,20 +146,18 @@ Float3Struct crossProduct(Float3Struct* firstVector,  Float3Struct* secondVector
 
 
 __kernel void countLayerCells(
-		//__global Float3Struct* fPrimaryVertex,	//0
-		__global int *iCurrentLayer	//1
-		//__global int * iLayerTrackletSize, //2 store the number of tracklet found for each layer
-		//__global TrackletStruct* currentLayerTracklets,	//3
-		//__global TrackletStruct* nextLayerTracklets,	//4
-		//__global ClusterStruct* currentLayerClusters,	//5
-		//__global ClusterStruct* nextLayerClusters,		//6
-		//__global ClusterStruct* next2LayerClusters,		//7
-		//__global int* currentLayerTrackletsLookupTable, //8
-		//__global int * iCellsPerTrackletPreviousLayer, 	//9
-		//__global int * iCurrentCellCounter //10 store the total number of cell found 
+		__global Float3Struct* fPrimaryVertex,	//0
+		__global int *iCurrentLayer,	//1
+		__global int * iLayerTrackletSize, //2 store the number of tracklet found for each layer
+		__global TrackletStruct* currentLayerTracklets,	//3
+		__global TrackletStruct* nextLayerTracklets,	//4
+		__global ClusterStruct* currentLayerClusters,	//5
+		__global ClusterStruct* nextLayerClusters,		//6
+		__global ClusterStruct* next2LayerClusters,		//7
+		__global int* currentLayerTrackletsLookupTable, //8
+		__global int * iCellsPerTrackletPreviousLayer 	//9
 )
 {	
-
 	const int currentTrackletIndex=get_global_id(0);
 	const Float3Struct primaryVertex = *fPrimaryVertex;
 	int iLayer=*iCurrentLayer;
@@ -180,7 +172,11 @@ __kernel void countLayerCells(
 	TrackletStruct currentTracklet=currentLayerTracklets[currentTrackletIndex];
 	int nextLayerClusterIndex=currentTracklet.secondClusterIndex;
 
-	int nextLayerFirstTrackletIndex=currentLayerTrackletsLookupTable[nextLayerClusterIndex];
+	int nextLayerFirstTrackletIndex;
+	if(nextLayerClusterIndex==0)
+		nextLayerFirstTrackletIndex=0;
+	else
+		nextLayerFirstTrackletIndex=currentLayerTrackletsLookupTable[nextLayerClusterIndex-1];
 
 	int nextLayerTrackletsNum=iLayerTrackletSize[iLayer + 1];
 
@@ -269,7 +265,6 @@ __kernel void countLayerCells(
 
 
 						if (distanceOfClosestApproach	<= CellMaxDistanceOfClosestApproachThreshold[iLayer]) {
-							atom_inc(&iCurrentCellCounter[iLayer]);
 							++trackletCellsNum;		
 							
 						}
@@ -281,6 +276,9 @@ __kernel void countLayerCells(
 		if(trackletCellsNum>0) {
 			iCellsPerTrackletPreviousLayer[currentTrackletIndex] = trackletCellsNum;
 		}
+		else {
+			iCellsPerTrackletPreviousLayer[currentTrackletIndex] = 0;
+		}
 	}
-
 }
+

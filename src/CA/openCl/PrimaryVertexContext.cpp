@@ -77,12 +77,13 @@ void PrimaryVertexContext::boostInitialize(compute::context boostContext, comput
 	for(int i=0;i<o2::ITS::CA::Constants::ITS::TrackletsPerRoad;i++){
 		this-> boostLayerIndex[i]=compute::buffer(boostContext,sizeof(int),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,&(i));
 	}
-
+/*
 	for(int i=0;i<o2::ITS::CA::Constants::ITS::LayersNumber;i++){
 		if(this->boostClusters[i].capacity()<=4){
 			this->boostClusters[i]=compute::vector<Cluster>(1,boostContext);
 		}
 	}
+	*/
 	for(int i=0;i<o2::ITS::CA::Constants::ITS::CellsPerRoad;i++){
 		if(this->boostTrackletsLookupTable[i].capacity()<=4){
 			this->boostTrackletsLookupTable[i]=compute::vector<int>(1,boostContext);

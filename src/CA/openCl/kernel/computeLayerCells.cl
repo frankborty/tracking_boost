@@ -1,6 +1,14 @@
+//============================================================================
+// Name        : KernelTest.cpp
+// Author      : frank
+// Version     :
+// Copyright   : Your copyright notice
+// Description : ComputeLayerCells opencl kernel
+//============================================================================
+
+
 __constant float CellMaxDeltaZThreshold[5]= { 0.2f, 0.4f, 0.5f, 0.6f, 3.0f } ;
 __constant float TrackletMaxDeltaZThreshold[6]= { 0.1f, 0.1f, 0.3f, 0.3f, 0.3f, 0.3f }; //default
-//__constant float TrackletMaxDeltaZThreshold[6]= { 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f };
 __constant int ZBins=20;
 __constant int PhiBins=20;
 __constant float Pi=3.14159265359f;
@@ -9,7 +17,6 @@ __constant int UnusedIndex=-1 ;
 __constant float CellMaxDeltaPhiThreshold=0.14f;
 __constant float CellMaxDeltaTanLambdaThreshold=0.025f;
 __constant float PhiCoordinateCut=0.3f;	//default
-//__constant float PhiCoordinateCut=PHICUT;	//default
 
 __constant float FloatMinThreshold = 1e-20f ;
 __constant float ZCoordinateCut=0.5f;	//default
@@ -81,18 +88,6 @@ __constant float CellMaxDistanceOfClosestApproachThreshold[5]= { 0.05f, 0.04f, 0
 	}VectStruct;
 
 
-int myMin(int a,int b){
-	if(a<b)
-		return a;
-	return b;
-}
-
-int myMax(int a,int b){
-	if(a>b)
-		return a;
-	return b;
-}
-
 
 int getZBinIndex(int layerIndex, float zCoordinate){
 	return (zCoordinate + LayersZCoordinate[layerIndex])* InverseZBinSize[layerIndex];
@@ -126,18 +121,17 @@ Int4Struct getBinsRect(ClusterStruct currentCluster, int layerIndex,float direct
 		return binRect;
 	}
 
-	binRect.x=myMax(0, getZBinIndex(layerIndex + 1, zRangeMin));
+	binRect.x=max(0, getZBinIndex(layerIndex + 1, zRangeMin));
 	binRect.y=getPhiBinIndex(getNormalizedPhiCoordinate(phiRangeMin));
-	binRect.z=myMin(ZBins - 1, getZBinIndex(layerIndex + 1, zRangeMax));
+	binRect.z=min(ZBins - 1, getZBinIndex(layerIndex + 1, zRangeMax));
 	binRect.w=getPhiBinIndex(getNormalizedPhiCoordinate(phiRangeMax));
 	return binRect;
 
 }
 
-
 int getBinIndex(int zIndex,int phiIndex)
 {
-	return myMin(phiIndex * PhiBins + zIndex,ZBins * PhiBins);
+	return min(phiIndex * PhiBins + zIndex,ZBins * PhiBins);
 }
 
 Float3Struct crossProduct(Float3Struct* firstVector,  Float3Struct* secondVector)
@@ -173,34 +167,41 @@ __kernel void computeLayerCells(
 	int trackletCellsNum = 0;
 	
 	int currentLookUpValue=iCellsPerTrackletPreviousLayer[currentTrackletIndex];
-	int nextLookUpValue=iCellsPerTrackletPreviousLayer[currentTrackletIndex+1];
-	int numberOfCellsToFind=nextLookUpValue-currentLookUpValue;
-	if(currentLookUpValue==nextLookUpValue)
+	int previousLookUpValue=0;
+	if(currentTrackletIndex!=0)
+		previousLookUpValue=iCellsPerTrackletPreviousLayer[currentTrackletIndex-1];
+	
+	int numberOfCellsToFind=currentLookUpValue-previousLookUpValue;
+	if(numberOfCellsToFind==0)
 		return;
 	
 	
 	
-	global TrackletStruct* currentTracklet=&currentLayerTracklets[currentTrackletIndex];
-	const int nextLayerClusterIndex=currentTracklet->secondClusterIndex;
+	TrackletStruct currentTracklet=currentLayerTracklets[currentTrackletIndex];
+	const int nextLayerClusterIndex=currentTracklet.secondClusterIndex;
 
-	const int nextLayerFirstTrackletIndex=currentLayerTrackletsLookupTable[nextLayerClusterIndex];
+	int nextLayerFirstTrackletIndex;
+	if(nextLayerClusterIndex==0)
+		nextLayerFirstTrackletIndex=0;
+	else
+		nextLayerFirstTrackletIndex=currentLayerTrackletsLookupTable[nextLayerClusterIndex-1];
 
 	const int nextLayerTrackletsNum=iLayerTrackletSize[iLayer + 1];
 
-	global TrackletStruct* nextLayerFirstTracklet=&nextLayerTracklets[nextLayerFirstTrackletIndex];
-	if (nextLayerFirstTracklet->firstClusterIndex == nextLayerClusterIndex) {
-		__global ClusterStruct* firstCellCluster=&currentLayerClusters[currentTracklet->firstClusterIndex] ;
+	TrackletStruct nextLayerFirstTracklet=nextLayerTracklets[nextLayerFirstTrackletIndex];
+	if (nextLayerFirstTracklet.firstClusterIndex == nextLayerClusterIndex) {
+		ClusterStruct firstCellCluster=currentLayerClusters[currentTracklet.firstClusterIndex] ;
 
-		__global ClusterStruct* secondCellCluster=&nextLayerClusters[currentTracklet->secondClusterIndex];
+		ClusterStruct secondCellCluster=nextLayerClusters[currentTracklet.secondClusterIndex];
 
-		const float firstCellClusterQuadraticRCoordinate=firstCellCluster->rCoordinate * firstCellCluster->rCoordinate;
+		const float firstCellClusterQuadraticRCoordinate=firstCellCluster.rCoordinate * firstCellCluster.rCoordinate;
 
-		const float secondCellClusterQuadraticRCoordinate=secondCellCluster->rCoordinate * secondCellCluster->rCoordinate;
+		const float secondCellClusterQuadraticRCoordinate=secondCellCluster.rCoordinate * secondCellCluster.rCoordinate;
 
 
 		Float3Struct firstDeltaVector;
-		firstDeltaVector.x=secondCellCluster->xCoordinate - firstCellCluster->xCoordinate;
-		firstDeltaVector.y=secondCellCluster->yCoordinate - firstCellCluster->yCoordinate;
+		firstDeltaVector.x=secondCellCluster.xCoordinate - firstCellCluster.xCoordinate;
+		firstDeltaVector.y=secondCellCluster.yCoordinate - firstCellCluster.yCoordinate;
 		firstDeltaVector.z=secondCellClusterQuadraticRCoordinate- firstCellClusterQuadraticRCoordinate;
 		
 		for (int iNextLayerTracklet=nextLayerFirstTrackletIndex ;
@@ -208,30 +209,30 @@ __kernel void computeLayerCells(
 				&& nextLayerTracklets[iNextLayerTracklet].firstClusterIndex== nextLayerClusterIndex;
 				++iNextLayerTracklet){
 			
-			__global TrackletStruct* nextTracklet=&nextLayerTracklets[iNextLayerTracklet];
+			TrackletStruct nextTracklet=nextLayerTracklets[iNextLayerTracklet];
 
-			const float deltaTanLambda=fabs(currentTracklet->tanLambda - nextTracklet->tanLambda);
+			const float deltaTanLambda=fabs(currentTracklet.tanLambda - nextTracklet.tanLambda);
 
-			const float deltaPhi=fabs(currentTracklet->phiCoordinate - nextTracklet->phiCoordinate);
+			const float deltaPhi=fabs(currentTracklet.phiCoordinate - nextTracklet.phiCoordinate);
 
 			if (deltaTanLambda < CellMaxDeltaTanLambdaThreshold && (deltaPhi < CellMaxDeltaPhiThreshold
 				|| fabs(deltaPhi - TwoPi) < CellMaxDeltaPhiThreshold)) {
 
-				const float averageTanLambda= 0.5f * (currentTracklet->tanLambda + nextTracklet->tanLambda) ;
+				const float averageTanLambda= 0.5f * (currentTracklet.tanLambda + nextTracklet.tanLambda) ;
 
-				const float directionZIntersection=-averageTanLambda * firstCellCluster->rCoordinate+ firstCellCluster->zCoordinate ;
+				const float directionZIntersection=-averageTanLambda * firstCellCluster.rCoordinate+ firstCellCluster.zCoordinate ;
 
 				const float deltaZ=fabs(directionZIntersection - primaryVertex.z) ;
 
 				if (deltaZ < CellMaxDeltaZThreshold[iLayer]) {
 
-					__global ClusterStruct* thirdCellCluster=&next2LayerClusters[nextTracklet->secondClusterIndex];
+					ClusterStruct thirdCellCluster=next2LayerClusters[nextTracklet.secondClusterIndex];
 
-					const float thirdCellClusterQuadraticRCoordinate=thirdCellCluster->rCoordinate	* thirdCellCluster->rCoordinate ;
+					const float thirdCellClusterQuadraticRCoordinate=thirdCellCluster.rCoordinate	* thirdCellCluster.rCoordinate ;
 
 					Float3Struct secondDeltaVector;
-					secondDeltaVector.x=thirdCellCluster->xCoordinate - firstCellCluster->xCoordinate;
-					secondDeltaVector.y=thirdCellCluster->yCoordinate - firstCellCluster->yCoordinate;
+					secondDeltaVector.x=thirdCellCluster.xCoordinate - firstCellCluster.xCoordinate;
+					secondDeltaVector.y=thirdCellCluster.yCoordinate - firstCellCluster.yCoordinate;
 					secondDeltaVector.z=thirdCellClusterQuadraticRCoordinate- firstCellClusterQuadraticRCoordinate;
 
 					Float3Struct cellPlaneNormalVector=crossProduct(&firstDeltaVector, &secondDeltaVector);
@@ -247,8 +248,8 @@ __kernel void computeLayerCells(
 						const Float3Struct normalizedPlaneVector = {cellPlaneNormalVector.x * inverseVectorNorm, cellPlaneNormalVector.y
 							*inverseVectorNorm, cellPlaneNormalVector.z * inverseVectorNorm };
 
-						const float planeDistance = -normalizedPlaneVector.x * (secondCellCluster->xCoordinate - primaryVertex.x)
-							- (normalizedPlaneVector.y * secondCellCluster->yCoordinate - primaryVertex.y)
+						const float planeDistance = -normalizedPlaneVector.x * (secondCellCluster.xCoordinate - primaryVertex.x)
+							- (normalizedPlaneVector.y * secondCellCluster.yCoordinate - primaryVertex.y)
 							- normalizedPlaneVector.z * secondCellClusterQuadraticRCoordinate ;
 
 
@@ -272,10 +273,10 @@ __kernel void computeLayerCells(
 
 
 						if (distanceOfClosestApproach	<= CellMaxDistanceOfClosestApproachThreshold[iLayer]) {
-							__global CellStruct* cell=&currentLayerCells[currentLookUpValue];
-							cell->mFirstClusterIndex=currentTracklet->firstClusterIndex;
-							cell->mSecondClusterIndex=currentTracklet->secondClusterIndex;
-							cell->mThirdClusterIndex=nextTracklet->secondClusterIndex;
+							__global CellStruct* cell=&currentLayerCells[previousLookUpValue];
+							cell->mFirstClusterIndex=currentTracklet.firstClusterIndex;
+							cell->mSecondClusterIndex=currentTracklet.secondClusterIndex;
+							cell->mThirdClusterIndex=nextTracklet.secondClusterIndex;
 							cell->mFirstTrackletIndex=currentTrackletIndex;
 							cell->mSecondTrackletIndex=iNextLayerTracklet;
 							cell->mNormalVectorCoordinates.x=normalizedPlaneVector.x;
@@ -284,8 +285,8 @@ __kernel void computeLayerCells(
 							cell->mCurvature=1.0f/cellTrajectoryRadius;
 							cell->mLevel=1;
 							
-							currentLookUpValue++;
-							if(currentLookUpValue==nextLookUpValue)
+							previousLookUpValue++;
+							if(currentLookUpValue==previousLookUpValue)
 					  			return;	
 									
 							

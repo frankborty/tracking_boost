@@ -47,7 +47,6 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	    const Layer& currentLayer { event.getLayer(iLayer) };
 	    const int clustersNum { currentLayer.getClustersSize() };
 	    mGPUContext.iClusterSize[iLayer]=clustersNum;
-	    std::cout<<"["<<iLayer<<"]: "<<clustersNum<<std::endl;
 	    mClusters[iLayer].clear();
 	    if(mGPUContext.boostClusters[iLayer].empty()==false)
 	    	mGPUContext.boostClusters[iLayer].clear();
@@ -67,31 +66,30 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	    });
 
 
-			if((size_t)clustersNum>mGPUContext.boostClusters[iLayer].capacity())
-				mGPUContext.boostClusters[iLayer].reserve(clustersNum*sizeof(Cluster));
-			compute::copy(mClusters[iLayer].begin(), mClusters[iLayer].end(), mGPUContext.boostClusters[iLayer].begin(), boostQueue);
-
-
-
+		mGPUContext.boostClusters[iLayer]=compute::vector<Cluster>(clustersNum*sizeof(Cluster),boostContext);
+		compute::copy(mClusters[iLayer].begin(), mClusters[iLayer].end(), mGPUContext.boostClusters[iLayer].begin(), boostQueue);
 
 	    if(iLayer < Constants::ITS::CellsPerRoad) {
-
 	      mCells[iLayer].clear();
 	      float cellsMemorySize = std::ceil(((Constants::Memory::CellsMemoryCoefficients[iLayer] * event.getLayer(iLayer).getClustersSize())
 	         * event.getLayer(iLayer + 1).getClustersSize()) * event.getLayer(iLayer + 2).getClustersSize());
 
 	      if(cellsMemorySize > mCells[iLayer].capacity()) {
-
 	        mCells[iLayer].reserve(cellsMemorySize);
 	      }
+	      mGPUContext.boostCells[iLayer]=compute::vector<Cell>(cellsMemorySize,boostContext);
+	      //compute::copy(mCells[iLayer].begin(), mCells[iLayer].end(), mGPUContext.boostCells[iLayer].begin(), boostQueue);
 	    }
 
 	    if(iLayer < Constants::ITS::CellsPerRoad - 1) {
-
+	    	int cellsLookupTableMemorySize=std::ceil((Constants::Memory::TrackletsMemoryCoefficients[iLayer + 1] * event.getLayer(iLayer + 1).getClustersSize())
+	    				* event.getLayer(iLayer + 2).getClustersSize());
 	      mCellsLookupTable[iLayer].clear();
-	      mCellsLookupTable[iLayer].resize(std::ceil(
-	        (Constants::Memory::TrackletsMemoryCoefficients[iLayer + 1] * event.getLayer(iLayer + 1).getClustersSize())
-	          * event.getLayer(iLayer + 2).getClustersSize()), Constants::ITS::UnusedIndex);
+	      mCellsLookupTable[iLayer].resize(cellsLookupTableMemorySize, Constants::ITS::UnusedIndex);
+
+
+	      mGPUContext.boostCellsLookupTable[iLayer]=compute::vector<int>(cellsLookupTableMemorySize,boostContext);
+	      compute::copy(mCellsLookupTable[iLayer].begin(), mCellsLookupTable[iLayer].end(), mGPUContext.boostCellsLookupTable[iLayer].begin(), boostQueue);
 
 
 	      mCellsNeighbours[iLayer].clear();
@@ -99,37 +97,27 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	  }
 
 	  for (int iLayer { 0 }; iLayer < Constants::ITS::CellsPerRoad - 1; ++iLayer) {
-
 	    mCellsNeighbours[iLayer].clear();
 	  }
 
 	  mRoads.clear();
 	  for (int iLayer { 0 }; iLayer < Constants::ITS::LayersNumber; ++iLayer) {
-
 	      const int clustersNum = static_cast<int>(mClusters[iLayer].size());
-
 	      if(iLayer > 0) {
 	        int previousBinIndex { 0 };
 	        mIndexTables[iLayer - 1][0] = 0;
-
 	        for (int iCluster { 0 }; iCluster < clustersNum; ++iCluster) {
-
 	          const int currentBinIndex { mClusters[iLayer][iCluster].indexTableBinIndex };
-
 	          if (currentBinIndex > previousBinIndex) {
-
 	            for (int iBin { previousBinIndex + 1 }; iBin <= currentBinIndex; ++iBin) {
-
 	              mIndexTables[iLayer - 1][iBin] = iCluster;
 	            }
-
 	            previousBinIndex = currentBinIndex;
 	          }
 	        }
 
 	        for (int iBin { previousBinIndex + 1 }; iBin <= Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins;
 	            iBin++) {
-
 	          mIndexTables[iLayer - 1][iBin] = clustersNum;
 	        }
 
@@ -137,40 +125,32 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 					boostContext,
 					mGPUContext.iIndexTableSize*sizeof(int),
 					(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-					(void *) mGPUContext.mIndexTables[iLayer-1]);
-
+					(void *) &(mIndexTables[iLayer-1][0]));
 	      }
-
 	      if(iLayer < Constants::ITS::TrackletsPerRoad) {
-
 	        mTracklets[iLayer].clear();
-
 	        float trackletsMemorySize = std::ceil((Constants::Memory::TrackletsMemoryCoefficients[iLayer] * event.getLayer(iLayer).getClustersSize())
 	           * event.getLayer(iLayer + 1).getClustersSize());
 
 	        if(trackletsMemorySize > mTracklets[iLayer].capacity()) {
-
 	          mTracklets[iLayer].reserve(trackletsMemorySize);
 	        }
+	        mGPUContext.boostTracklets[iLayer]=compute::vector<Tracklet>(trackletsMemorySize,boostContext);
+			compute::copy(mTracklets[iLayer].begin(), mTracklets[iLayer].end(), mGPUContext.boostTracklets[iLayer].begin(), boostQueue);
 	      }
 
 	      if(iLayer < Constants::ITS::CellsPerRoad) {
-
 	        mTrackletsLookupTable[iLayer].clear();
 	        mTrackletsLookupTable[iLayer].resize(
 	           event.getLayer(iLayer + 1).getClustersSize(), Constants::ITS::UnusedIndex);
-
 	        int size=event.getLayer(iLayer + 1).getClustersSize();
 
-			if((size_t)size>mGPUContext.boostTrackletsLookupTable[iLayer].capacity())
-					mGPUContext.boostTrackletsLookupTable[iLayer].reserve(size*sizeof(int));
-			compute::copy(mTrackletsLookupTable[iLayer].begin(), mTrackletsLookupTable[iLayer].end(), mGPUContext.boostTrackletsLookupTable[iLayer].begin(), boostQueue);
-
+	        mGPUContext.boostTrackletsLookupTable[iLayer]=compute::vector<int>(size,boostContext);
+	        compute::copy(mTrackletsLookupTable[iLayer].begin(), mTrackletsLookupTable[iLayer].end(), mGPUContext.boostTrackletsLookupTable[iLayer].begin(), boostQueue);
 	      }
 	    }
 
-
-	  mGPUContext.boostClusterSize=compute::buffer(boostContext,Constants::ITS::LayersNumber*sizeof(int),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,mGPUContext.iClusterSize);
+	  	mGPUContext.boostClusterSize=compute::buffer(boostContext,Constants::ITS::LayersNumber*sizeof(int),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,mGPUContext.iClusterSize);
 
 
 #endif

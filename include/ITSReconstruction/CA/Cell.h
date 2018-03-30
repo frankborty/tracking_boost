@@ -34,6 +34,7 @@ class Cell
   final
   {
     public:
+	  GPU_DEVICE Cell() = default;
       GPU_DEVICE Cell(const int, const int, const int, const int, const int, const float3&, const float);
 
 #if TRACKINGITSU_OCL_MODE
@@ -51,14 +52,14 @@ class Cell
       void setLevel(const int level);
 
     private:
-      const int mFirstClusterIndex;
-      const int mSecondClusterIndex;
-      const int mThirdClusterIndex;
-      const int mFirstTrackletIndex;
-      const int mSecondTrackletIndex;
-      const float3 mNormalVectorCoordinates;
-      const float mCurvature;
-      int mLevel;
+      const int mFirstClusterIndex = -1;
+      const int mSecondClusterIndex = -1;
+      const int mThirdClusterIndex = -1;
+      const int mFirstTrackletIndex = -1;
+      const int mSecondTrackletIndex = -1;
+      const float3 mNormalVectorCoordinates = {0.f,0.f,0.f};
+      const float mCurvature = 0.f;
+      int mLevel = -1;
   };
 
   inline int Cell::getFirstClusterIndex() const

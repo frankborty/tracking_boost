@@ -37,7 +37,7 @@ Context::Context()
 	std::string info;
 	std::size_t iPlatformList;
 	std::size_t iTotalDevice=0;
-	int scelta=0;
+	int scelta=1;
 	std::vector<compute::device> boostDevicesList;
 
 
@@ -76,14 +76,13 @@ Context::Context()
 		warpSize=128;
 	}
 
-	try{
+
 	mBoostDeviceProperties.warpSize=warpSize;
-	//mBoostDeviceProperties.computeTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/computeLayerTracklets.cl","computeLayerTracklets");
 	mBoostDeviceProperties.countTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/countLayerTracklets.cl","countLayerTracklets");
-	}catch (std::exception& e) {
-		std::cout<<e.what()<<std::endl;
-		throw std::runtime_error { e.what() };
-	}
+	mBoostDeviceProperties.computeTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/computeLayerTracklets.cl","computeLayerTracklets");
+	mBoostDeviceProperties.countCellsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/countLayerCells.cl","countLayerCells");
+	mBoostDeviceProperties.computeCellsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"./src/kernel/computeLayerCells.cl","computeLayerCells");
+
 
 
 
@@ -167,12 +166,6 @@ std::cout<<"ocl-start"<<std::endl;
 			}
 
 		}
-		//std::cout<<"total Device: "<<iTotalDevice<<std::endl;
-		/*for(uint j=0;j<iTotalDevice;j++){
-			std::cout<<"["<<j<<"]"<<mDeviceProperties[j].name<<std::endl;
-		}
-		std::cout<<"Choose device:";
-		std::cin>>scelta;*/
 	}
 	catch(const cl::Error &err){
 		std::string errString=Utils::OCLErr_code(err.err());
