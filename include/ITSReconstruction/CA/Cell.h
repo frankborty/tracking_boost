@@ -30,26 +30,28 @@ namespace ITS
 namespace CA
 {
 
-class Cell
+class  Cell
   final
   {
+
+#if TRACKINGITSU_OCL_MODE
+  public:
+      GPU_DEVICE Cell() = default;
+      GPU_DEVICE Cell(CellStruct&);
+      GPU_DEVICE Cell(const int, const int, const int, const int, const int, const float3&, const float);
+  public:
+	  const int mFirstClusterIndex = -1;
+	  const int mSecondClusterIndex = -1;
+	  const int mThirdClusterIndex = -1;
+	  const int mFirstTrackletIndex = -1;
+	  const int mSecondTrackletIndex = -1;
+	  compute::float_ mNormalVectorCoordinates[3];
+	  const float mCurvature = 0.f;
+	  int mLevel = -1;
+#else
     public:
 	  GPU_DEVICE Cell() = default;
       GPU_DEVICE Cell(const int, const int, const int, const int, const int, const float3&, const float);
-
-#if TRACKINGITSU_OCL_MODE
-      GPU_DEVICE Cell(CellStruct&);
-#endif
-
-      int getFirstClusterIndex() const;
-      int getSecondClusterIndex() const;
-      int getThirdClusterIndex() const;
-      GPU_HOST_DEVICE int getFirstTrackletIndex() const;
-      int getSecondTrackletIndex() const;
-      int getLevel() const;
-      float getCurvature() const;
-      const float3& getNormalVectorCoordinates() const;
-      void setLevel(const int level);
 
     private:
       const int mFirstClusterIndex = -1;
@@ -60,6 +62,22 @@ class Cell
       const float3 mNormalVectorCoordinates = {0.f,0.f,0.f};
       const float mCurvature = 0.f;
       int mLevel = -1;
+#endif
+
+
+      int getFirstClusterIndex() const;
+      int getSecondClusterIndex() const;
+      int getThirdClusterIndex() const;
+      GPU_HOST_DEVICE int getFirstTrackletIndex() const;
+      int getSecondTrackletIndex() const;
+      int getLevel() const;
+      float getCurvature() const;
+#if TRACKINGITSU_OCL_MODE
+      const float3& getNormalVectorCoordinates() const;
+#else
+      const float3& getNormalVectorCoordinates() const;
+#endif
+      void setLevel(const int level);
   };
 
   inline int Cell::getFirstClusterIndex() const
@@ -97,10 +115,20 @@ class Cell
     return mCurvature;
   }
 
+#if TRACKINGITSU_OCL_MODE
+inline const float3& Cell::getNormalVectorCoordinates() const
+{
+  const float3& returnValue{mNormalVectorCoordinates[0],mNormalVectorCoordinates[1],mNormalVectorCoordinates[2]};
+  return returnValue;
+}
+#else
+
   inline const float3& Cell::getNormalVectorCoordinates() const
   {
-    return mNormalVectorCoordinates;
+	  return mNormalVectorCoordinates;
   }
+#endif
+
 
   inline void Cell::setLevel(const int level)
   {

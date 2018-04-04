@@ -246,7 +246,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
 
 	computeTracklets();
 	computeCells();
-   findCellsNeighbours();
+    findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
 
@@ -272,7 +272,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     mPrimaryVertexContext.initialize(event, iVertex);
     end = std::chrono::system_clock::now();
     int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-   ;
+
 
     std::cout << " - Elapsed: " << elapsed_seconds << "ms" << std::endl;
 
@@ -435,8 +435,11 @@ void Tracker<IsGPU>::findCellsNeighbours()
                     == nextLayerTrackletIndex; ++iNextLayerCell) {
 
           Cell& nextCell { mPrimaryVertexContext.getCells()[iLayer + 1][iNextLayerCell] };
+
+
           const float3 currentCellNormalVector { currentCell.getNormalVectorCoordinates() };
           const float3 nextCellNormalVector { nextCell.getNormalVectorCoordinates() };
+
           const float3 normalVectorsDeltaVector { currentCellNormalVector.x - nextCellNormalVector.x,
               currentCellNormalVector.y - nextCellNormalVector.y, currentCellNormalVector.z - nextCellNormalVector.z };
 

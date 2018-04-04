@@ -128,7 +128,7 @@ int getBinIndex(int zIndex,int phiIndex)
 {
 	return min(phiIndex * PhiBins + zIndex,ZBins * PhiBins);
 }
-
+/*
 __kernel void countLayerTracklets(
 				__global Float3Struct* primaryVertex,	//0
 				__global ClusterStruct* currentLayerClusters, //1
@@ -201,12 +201,90 @@ __kernel void countLayerTracklets(
   	}
   	else{
     	iTrackletsPerClusterTablePreviousLayer[currentClusterIndex] = 0;
-  	}	
-
-  	
-  
+  	}
 }
+*/
 
+__kernel void countLayerTracklets(
+				__global Float3Struct* primaryVertex,	//0
+				__global ClusterStruct* currentLayerClusters, //1
+				__global ClusterStruct* nextLayerClusters, //2
+				__global int * currentLayerIndexTable, //3
+				__global int * iCurrentLayer, //4
+				__global int * iLayerClusterSize, //5
+				__global int * iTrackletsPerClusterTablePreviousLayer, //6
+				__global int * iCurrentTrackletsPosition, //7 
+				__global TrackletStruct* currentLayerTracklets //8
+		)
+					
+{
+	const int currentClusterIndex=get_global_id(0);
+	int clusterTrackletsNum=0;
 
+	int iLayer=*iCurrentLayer;
+	
+	
+	int maxLayerCluster=iLayerClusterSize[iLayer];
+	int currentLayerClusterVectorSize=iLayerClusterSize[iLayer];
+	
+	int nextLayerClusterVectorSize=iLayerClusterSize[iLayer+1];
+	
+	if(currentClusterIndex>=maxLayerCluster){
+		return;
+	}
+	
 
+	
+	if(currentClusterIndex<currentLayerClusterVectorSize){
+		ClusterStruct currentCluster=currentLayerClusters[currentClusterIndex];
+		//printf("[%d] %d\t%d\n",currentClusterIndex,currentCluster.clusterId,currentCluster.indexTableBinIndex);
+		float tanLambda=(currentCluster.zCoordinate-primaryVertex->z)/currentCluster.rCoordinate;
+		float directionZIntersection= tanLambda*(LayersRCoordinate[iLayer+1]-currentCluster.rCoordinate)+currentCluster.zCoordinate;
+
+		const Int4Struct selectedBinsRect=getBinsRect(&currentCluster,iLayer,directionZIntersection);
+		if (selectedBinsRect.x != 0 || selectedBinsRect.y != 0 || selectedBinsRect.z != 0 || selectedBinsRect.w != 0) {
+	      	const int nextLayerClustersNum=nextLayerClusterVectorSize;
+	      	int phiBinsNum=selectedBinsRect.w - selectedBinsRect.y + 1;
+			if(phiBinsNum<0){
+		    	  phiBinsNum+=PhiBins;
+		    }
+			
+		    for(int iPhiBin=selectedBinsRect.y,iPhiCount=0;iPhiCount < phiBinsNum;iPhiBin = ++iPhiBin == PhiBins ? 0 : iPhiBin, iPhiCount++){
+		    	   
+		    	  const int firstBinIndex=getBinIndex(selectedBinsRect.x,iPhiBin);
+		    	  const int firstRowClusterIndex = currentLayerIndexTable[firstBinIndex];
+		    	  const int maxRowClusterIndex = currentLayerIndexTable[firstBinIndex+ selectedBinsRect.z - selectedBinsRect.x + 1 ];
+				  
+
+				  for (int iNextLayerCluster=firstRowClusterIndex;iNextLayerCluster <= maxRowClusterIndex && iNextLayerCluster < nextLayerClustersNum; ++iNextLayerCluster) {
+		    			if(iNextLayerCluster>=nextLayerClusterVectorSize)
+		    				break;
+		    		
+		    		  ClusterStruct nextCluster=nextLayerClusters[iNextLayerCluster];
+		    		 
+		    		  const float deltaZ=fabs(tanLambda * (nextCluster.rCoordinate - currentCluster.rCoordinate) + currentCluster.zCoordinate - nextCluster.zCoordinate);
+		    		  const float deltaPhi=fabs(currentCluster.phiCoordinate - nextCluster.phiCoordinate);
+
+		    		  if (deltaZ < TrackletMaxDeltaZThreshold[iLayer] && (deltaPhi<PhiCoordinateCut || fabs(deltaPhi-TwoPi)<PhiCoordinateCut)){
+		    			  int iTrackletPosition=atom_inc(&iCurrentTrackletsPosition[iLayer]);
+		    			  __global TrackletStruct* tracklet=&currentLayerTracklets[iTrackletPosition];
+		    			  tracklet->firstClusterIndex=currentClusterIndex;
+		    			  tracklet->secondClusterIndex=iNextLayerCluster;
+		    			  tracklet->tanLambda=(currentCluster.zCoordinate - nextCluster.zCoordinate) / (currentCluster.rCoordinate - nextCluster.rCoordinate);
+		    			  tracklet->phiCoordinate= atan2(currentCluster.yCoordinate - nextCluster.yCoordinate, currentCluster.xCoordinate - nextCluster.xCoordinate);
+		    			  ++clusterTrackletsNum;
+		    			  
+		    		  }
+		    	  }
+		      }
+		}
+	}	
+
+	if(clusterTrackletsNum>0) {
+		iTrackletsPerClusterTablePreviousLayer[currentClusterIndex] = clusterTrackletsNum;
+  	}
+  	else{
+    	iTrackletsPerClusterTablePreviousLayer[currentClusterIndex] = 0;
+  	}
+}
 

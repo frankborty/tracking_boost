@@ -34,6 +34,7 @@
 	#define USE_BOOST
 	#include "boost/compute.hpp"
 	#include "boost/compute/types/complex.hpp"
+	#include "boost/compute/types/struct.hpp"
 	namespace compute = boost::compute;
 #endif
 # define TRACKINGITSU_OCL_MODE true
