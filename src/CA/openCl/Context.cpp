@@ -59,12 +59,7 @@ Context::Context()
 
 	mBoostDeviceProperties.boostDevice=boostDevicesList[scelta];
 	mBoostDeviceProperties.boostContext=compute::context(mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue[0]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue[1]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue[2]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue[3]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue[4]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
-	mBoostDeviceProperties.boostCommandQueue[5]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+	mBoostDeviceProperties.boostCommandQueue=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
 
 	char deviceVendor[255];
 	int warpSize=0;

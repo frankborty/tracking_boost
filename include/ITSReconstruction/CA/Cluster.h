@@ -28,10 +28,14 @@ namespace CA
 {
 
 struct Cluster
-    final
-    {
+#ifndef flag_icl
+final
+	{
       Cluster(const int, const int, const float, const float, const float, const float, const int);
       Cluster(const int, const float3&, const Cluster&);
+#else
+      {
+#endif
 
       float xCoordinate;
       float yCoordinate;
