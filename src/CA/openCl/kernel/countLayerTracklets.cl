@@ -3,72 +3,14 @@
 // Author      : frank
 // Version     :
 // Copyright   : Your copyright notice
-// Description : ComputeLayerTracklets opencl kernel
+// Description : CountLayerTracklets opencl kernel
 //============================================================================
 
 
 #include "Definitions.h"
 #include "Constants.h"
-
-
-	typedef struct{
-		int x;
-		int y;
-		int z;
-		int w;
-	}Int4Struct;
-
-	typedef struct{
-		float x;
-		float y;
-		float z;
-	}Float3Struct;
-
-	typedef struct{
-		float xCoordinate;
-		float yCoordinate;
-		float zCoordinate;
-		float phiCoordinate;
-		float rCoordinate;
-		int clusterId;
-		float alphaAngle;
-		int monteCarloId;
-		int indexTableBinIndex;
-	}ClusterStruct;
-
-	typedef struct{
-		int mFirstClusterIndex;
-		int mSecondClusterIndex;
-		int mThirdClusterIndex;
-		int mFirstTrackletIndex;
-		int mSecondTrackletIndex;
-		Float3Struct mNormalVectorCoordinates;
-		float mCurvature;
-		int mLevel;
-	}CellStruct;
-
-	typedef struct{
-		int firstClusterIndex;
-		int secondClusterIndex;
-		float tanLambda;
-		float phiCoordinate;
-	}TrackletStruct;
-
-	typedef struct{
-		int firstClusterIndex;
-		int secondClusterIndex;
-		float tanLambda;
-		float phiCoordinate;
-	}RoadsStruct;
-
-	typedef struct{
-		void * srPunt;
-		int size;
-	}VectStruct;
-
-
-
-
+#include "Tracklet.h"
+#include "Cluster.h"
 
 
 int getZBinIndex(int layerIndex, float zCoordinate){
@@ -87,7 +29,7 @@ float getNormalizedPhiCoordinate(float phiCoordinate)
 }
 
 
-Int4Struct getBinsRect(ClusterStruct* currentCluster, int layerIndex,float directionZIntersection)
+Int4Struct getBinsRect(Cluster* currentCluster, int layerIndex,float directionZIntersection)
 {
 	const float zRangeMin = directionZIntersection - 2 * ZCoordinateCut;
 	const float phiRangeMin = currentCluster->phiCoordinate - PhiCoordinateCut;
@@ -119,8 +61,8 @@ int getBinIndex(int zIndex,int phiIndex)
 
 __kernel void countLayerTracklets(
 				__global Float3Struct* primaryVertex,	//0
-				__global ClusterStruct* currentLayerClusters, //1
-				__global ClusterStruct* nextLayerClusters, //2
+				__global Cluster* currentLayerClusters, //1
+				__global Cluster* nextLayerClusters, //2
 				__global int * currentLayerIndexTable, //3
 				__global int * iCurrentLayer, //4
 				__global int * iLayerClusterSize, //5
@@ -147,7 +89,7 @@ __kernel void countLayerTracklets(
 
 	
 	if(currentClusterIndex<currentLayerClusterVectorSize){
-		ClusterStruct currentCluster=currentLayerClusters[currentClusterIndex];
+		Cluster currentCluster=currentLayerClusters[currentClusterIndex];
 		//printf("[%d] %d\t%d\n",currentClusterIndex,currentCluster.clusterId,currentCluster.indexTableBinIndex);
 		float tanLambda=(currentCluster.zCoordinate-primaryVertex->z)/currentCluster.rCoordinate;
 		float directionZIntersection= tanLambda*(LayersRCoordinate[iLayer+1]-currentCluster.rCoordinate)+currentCluster.zCoordinate;
@@ -171,7 +113,7 @@ __kernel void countLayerTracklets(
 		    			if(iNextLayerCluster>=nextLayerClusterVectorSize)
 		    				break;
 		    		
-		    		  ClusterStruct nextCluster=nextLayerClusters[iNextLayerCluster];
+		    		  Cluster nextCluster=nextLayerClusters[iNextLayerCluster];
 		    		 
 		    		  const float deltaZ=fabs(tanLambda * (nextCluster.rCoordinate - currentCluster.rCoordinate) + currentCluster.zCoordinate - nextCluster.zCoordinate);
 		    		  const float deltaPhi=fabs(currentCluster.phiCoordinate - nextCluster.phiCoordinate);

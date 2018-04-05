@@ -14,7 +14,7 @@
 
 #ifndef TRACKINGITSU_INCLUDE_CACELL_H_
 #define TRACKINGITSU_INCLUDE_CACELL_H_
-
+#ifndef __OPENCL_C_VERSION__
 #include <array>
 #include <vector>
 
@@ -60,6 +60,20 @@ class Cell
       const float3 mNormalVectorCoordinates = {0.f,0.f,0.f};
       const float mCurvature = 0.f;
       int mLevel = -1;
+
+#else
+      typedef struct{
+      		int mFirstClusterIndex;
+      		int mSecondClusterIndex;
+      		int mThirdClusterIndex;
+      		int mFirstTrackletIndex;
+      		int mSecondTrackletIndex;
+      		Float3Struct mNormalVectorCoordinates;
+      		float mCurvature;
+      		int mLevel;
+      	}Cell;
+#endif
+#ifndef __OPENCL_C_VERSION__
   };
 
   inline int Cell::getFirstClusterIndex() const
@@ -110,4 +124,5 @@ class Cell
 }
 }
 }
+#endif
 #endif /* TRACKINGITSU_INCLUDE_CACELL_H_ */

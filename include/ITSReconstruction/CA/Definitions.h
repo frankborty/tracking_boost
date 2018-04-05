@@ -16,9 +16,30 @@
 #define TRACKINGITSU_INCLUDE_CADEFINITIONS_H_
 
 #ifdef __OPENCL_C_VERSION__
-# define CONSTEXPR __constant
+#define CONSTEXPR __constant
+#define CONST
+
+typedef struct{
+		int x;
+		int y;
+		int z;
+		int w;
+	}Int4Struct;
+
+typedef struct{
+		float x;
+		float y;
+		float z;
+	}Float3Struct;
+
+typedef struct{
+		float x;
+		float y;
+	}Float2Struct;
+
 #else
-# define CONSTEXPR constexpr
+#define CONSTEXPR constexpr
+#define CONST const
 
 #include <array>
 

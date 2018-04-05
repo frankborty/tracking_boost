@@ -16,6 +16,7 @@
 #ifndef TRACKINGITSU_INCLUDE_CACLUSTER_H_
 #define TRACKINGITSU_INCLUDE_CACLUSTER_H_
 
+#ifndef __OPENCL_C_VERSION__
 #include "ITSReconstruction/CA/Definitions.h"
 #include "ITSReconstruction/CA/MathUtils.h"
 #include "ITSReconstruction/CA/IndexTableUtils.h"
@@ -37,19 +38,26 @@ final
       {
 #endif
 
-      float xCoordinate;
-      float yCoordinate;
-      float zCoordinate;
-      float phiCoordinate;
-      float rCoordinate;
-      int clusterId;
-      float alphaAngle;
-      int monteCarloId;
-      int indexTableBinIndex;
-  };
+#else
+	  typedef struct{
+#endif
+		  float xCoordinate;
+		  float yCoordinate;
+		  float zCoordinate;
+		  float phiCoordinate;
+		  float rCoordinate;
+		  int clusterId;
+		  float alphaAngle;
+		  int monteCarloId;
+		  int indexTableBinIndex;
+  }
+#ifdef __OPENCL_C_VERSION__
+      Cluster;
+#else
+	  ;
 
 }
 }
 }
-
+#endif
 #endif /* TRACKINGITSU_INCLUDE_CACLUSTER_H_ */

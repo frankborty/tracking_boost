@@ -12,9 +12,13 @@
 /// \brief 
 ///
 
+
+
+
 #ifndef TRACKINGITSU_INCLUDE_TRACKLET_H_
 #define TRACKINGITSU_INCLUDE_TRACKLET_H_
 
+#ifndef __OPENCL_C_VERSION__
 #include "ITSReconstruction/CA/Cluster.h"
 
 namespace o2
@@ -24,20 +28,29 @@ namespace ITS
 namespace CA
 {
 
+
 struct Tracklet
-    final
+	final
     {
       Tracklet();
       GPU_DEVICE Tracklet(const int, const int, const Cluster&, const Cluster&);
 
-      const int firstClusterIndex;
-      const int secondClusterIndex;
-      const float tanLambda;
-      const float phiCoordinate;
-  };
+#else
+      typedef struct{
+#endif
+
+      CONST int firstClusterIndex;
+      CONST int secondClusterIndex;
+      CONST float tanLambda;
+      CONST float phiCoordinate;
+  }
+#ifdef __OPENCL_C_VERSION__
+      Tracklet;
+#else
+	  ;
 
 }
 }
 }
-
+#endif
 #endif /* TRACKINGITSU_INCLUDE_TRACKLET_H_ */
