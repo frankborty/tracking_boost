@@ -274,7 +274,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
    ;
 
-    std::cout << " - Elapsed: " << elapsed_seconds << "ms" << std::endl;
+    std::cout << " - Context initialization: " << elapsed_seconds << "ms" << std::endl;
 
     evaluateTask(&Tracker<IsGPU>::computeTracklets, "Tracklets Finding");
     evaluateTask(&Tracker<IsGPU>::computeCells, "Cells Finding");

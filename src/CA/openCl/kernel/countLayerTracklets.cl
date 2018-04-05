@@ -7,20 +7,8 @@
 //============================================================================
 
 
-__constant float TrackletMaxDeltaZThreshold[6]= { 0.1f, 0.1f, 0.3f, 0.3f, 0.3f, 0.3f }; //default
-__constant int ZBins=20;
-__constant int PhiBins=20;
-__constant float Pi=3.14159265359f;
-__constant float TwoPi=2.0f * 3.14159265359f ;
-__constant int UnusedIndex=-1 ;
-__constant float CellMaxDeltaPhiThreshold=0.14f;
-__constant float PhiCoordinateCut=0.3f;	//default
-
-__constant float ZCoordinateCut=0.5f;	//default
-__constant float InversePhiBinSize=20 / (2.0f * 3.14159265359f) ;
-__constant float LayersZCoordinate[7]={16.333f, 16.333f, 16.333f, 42.140f, 42.140f, 73.745f, 73.745f};
-__constant float LayersRCoordinate[7]={2.33959f, 3.14076f, 3.91924f, 19.6213f, 24.5597f, 34.388f, 39.3329f};
-__constant float InverseZBinSize[7]=  {0.5f * 20 / 16.333f, 0.5f * 20 / 16.333f, 0.5f * 20 / 16.333f,0.5f * 20 / 42.140f, 0.5f * 20 / 42.140f, 0.5f * 20 / 73.745f, 0.5f * 20 / 73.745f };
+#include "Definitions.h"
+#include "Constants.h"
 
 
 	typedef struct{
@@ -142,10 +130,11 @@ __kernel void countLayerTracklets(
 {
 	const int currentClusterIndex=get_global_id(0);
 	int clusterTrackletsNum=0;
-
+	
 	int iLayer=*iCurrentLayer;
-	
-	
+
+
+		
 	int maxLayerCluster=iLayerClusterSize[iLayer];
 	int currentLayerClusterVectorSize=iLayerClusterSize[iLayer];
 	

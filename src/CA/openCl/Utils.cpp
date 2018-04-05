@@ -71,7 +71,7 @@ compute::kernel Utils::CreateBoostKernelFromFile(compute::context boostContext ,
 
 		std::string srcStdStr = oss.str();
 		program =compute::program::create_with_source(srcStdStr, boostContext);
-		program.build();
+		program.build("-I /home/frank/Scrivania/tracking_boost/include/ITSReconstruction/CA/");
 
 		// create the kernel
 		kernel=compute::kernel(program, kernelName);

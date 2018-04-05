@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 #endif
 
 
+
   if (argv[1] == NULL) {
 
     std::cerr << "Please, provide a data file." << std::endl;

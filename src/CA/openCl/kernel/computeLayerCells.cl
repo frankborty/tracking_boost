@@ -6,26 +6,8 @@
 // Description : ComputeLayerCells opencl kernel
 //============================================================================
 
-
-__constant float CellMaxDeltaZThreshold[5]= { 0.2f, 0.4f, 0.5f, 0.6f, 3.0f } ;
-__constant float TrackletMaxDeltaZThreshold[6]= { 0.1f, 0.1f, 0.3f, 0.3f, 0.3f, 0.3f }; //default
-__constant int ZBins=20;
-__constant int PhiBins=20;
-__constant float Pi=3.14159265359f;
-__constant float TwoPi=2.0f * 3.14159265359f ;
-__constant int UnusedIndex=-1 ;
-__constant float CellMaxDeltaPhiThreshold=0.14f;
-__constant float CellMaxDeltaTanLambdaThreshold=0.025f;
-__constant float PhiCoordinateCut=0.3f;	//default
-
-__constant float FloatMinThreshold = 1e-20f ;
-__constant float ZCoordinateCut=0.5f;	//default
-__constant float InversePhiBinSize=20 / (2.0f * 3.14159265359f) ;
-__constant float LayersZCoordinate[7]={16.333f, 16.333f, 16.333f, 42.140f, 42.140f, 73.745f, 73.745f};
-__constant float LayersRCoordinate[7]={2.33959f, 3.14076f, 3.91924f, 19.6213f, 24.5597f, 34.388f, 39.3329f};
-__constant float InverseZBinSize[7]=  {0.5f * 20 / 16.333f, 0.5f * 20 / 16.333f, 0.5f * 20 / 16.333f,0.5f * 20 / 42.140f, 0.5f * 20 / 42.140f, 0.5f * 20 / 73.745f, 0.5f * 20 / 73.745f };
-__constant float CellMaxDistanceOfClosestApproachThreshold[5]= { 0.05f, 0.04f, 0.05f, 0.2f, 0.4f } ;
-
+#include "Definitions.h"
+#include "Constants.h"
 
 	typedef struct{
 		int x;
