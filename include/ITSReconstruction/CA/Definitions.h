@@ -18,9 +18,6 @@
 #ifdef __OPENCL_C_VERSION__
 #define CONSTEXPR __constant
 #define CONST
-#define INITINT
-#define INITFLOAT
-#define INITFLOAT3
 #define FLOAT3 Float3Struct
 typedef struct{
 		int x;
@@ -43,9 +40,6 @@ typedef struct{
 #else
 #define CONSTEXPR constexpr
 #define CONST const
-#define INITINT 	=-1
-#define INITFLOAT 	=0.f
-#define INITFLOAT3  ={0.f,0.f,0.f}
 #define FLOAT3 float3
 #include <array>
 

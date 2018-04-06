@@ -51,6 +51,9 @@ Context::Context()
 		mBoostDeviceProperties.boostContext=compute::context(mBoostDeviceProperties.boostDevice);
 		mBoostDeviceProperties.boostCommandQueue=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
 
+		for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++)
+			mBoostDeviceProperties.boostCommandQueues[i]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+
 		char deviceVendor[255];
 		int warpSize=0;
 		clGetDeviceInfo(mBoostDeviceProperties.boostDevice.id(), CL_DEVICE_VENDOR, sizeof(deviceVendor), deviceVendor, NULL);

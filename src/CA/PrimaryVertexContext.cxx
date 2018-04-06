@@ -37,7 +37,7 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	//std::cout<<"initialize OCL primary vertex"<<std::endl;
 	mPrimaryVertex = event.getPrimaryVertex(primaryVertexIndex);
 	compute::context boostContext =GPU::Context::getInstance().getBoostDeviceProperties().boostContext;
-	compute::command_queue boostQueue =GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueue;
+	compute::command_queue boostQueue =GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueues[0];
 	mGPUContext.boostInitialize(boostContext,boostQueue);
 
 	mGPUContext.boostPrimaryVertex=compute::buffer(boostContext,sizeof(float3),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,&(mPrimaryVertex));

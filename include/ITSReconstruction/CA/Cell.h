@@ -34,7 +34,7 @@ class Cell
   final
   {
     public:
-	  GPU_DEVICE Cell() = default;
+	  GPU_DEVICE Cell();
       GPU_DEVICE Cell(const int, const int, const int, const int, const int, const float3&, const float);
 
 #if TRACKINGITSU_OCL_MODE
@@ -55,14 +55,14 @@ class Cell
 #else
 	  typedef struct{
 #endif
-      CONST int mFirstClusterIndex 		INITINT;
-      CONST int mSecondClusterIndex 	INITINT;
-      CONST int mThirdClusterIndex		INITINT;
-      CONST int mFirstTrackletIndex 	INITINT;
-      CONST int mSecondTrackletIndex 	INITINT;
-      CONST FLOAT3 mNormalVectorCoordinates INITFLOAT3;
-      CONST float mCurvature 			INITFLOAT;
-      int mLevel INITINT;
+      CONST int mFirstClusterIndex;
+      CONST int mSecondClusterIndex;
+      CONST int mThirdClusterIndex;
+      CONST int mFirstTrackletIndex;
+      CONST int mSecondTrackletIndex;
+      CONST FLOAT3 mNormalVectorCoordinates;
+      CONST float mCurvature;
+      int mLevel;
 
 	  }
 #ifdef __OPENCL_C_VERSION__
