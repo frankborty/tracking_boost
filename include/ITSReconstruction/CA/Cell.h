@@ -52,29 +52,23 @@ class Cell
       void setLevel(const int level);
 
     private:
-      const int mFirstClusterIndex = -1;
-      const int mSecondClusterIndex = -1;
-      const int mThirdClusterIndex = -1;
-      const int mFirstTrackletIndex = -1;
-      const int mSecondTrackletIndex = -1;
-      const float3 mNormalVectorCoordinates = {0.f,0.f,0.f};
-      const float mCurvature = 0.f;
-      int mLevel = -1;
-
 #else
-      typedef struct{
-      		int mFirstClusterIndex;
-      		int mSecondClusterIndex;
-      		int mThirdClusterIndex;
-      		int mFirstTrackletIndex;
-      		int mSecondTrackletIndex;
-      		Float3Struct mNormalVectorCoordinates;
-      		float mCurvature;
-      		int mLevel;
-      	}Cell;
+	  typedef struct{
 #endif
-#ifndef __OPENCL_C_VERSION__
-  };
+      CONST int mFirstClusterIndex 		INITINT;
+      CONST int mSecondClusterIndex 	INITINT;
+      CONST int mThirdClusterIndex		INITINT;
+      CONST int mFirstTrackletIndex 	INITINT;
+      CONST int mSecondTrackletIndex 	INITINT;
+      CONST FLOAT3 mNormalVectorCoordinates INITFLOAT3;
+      CONST float mCurvature 			INITFLOAT;
+      int mLevel INITINT;
+
+	  }
+#ifdef __OPENCL_C_VERSION__
+	  Cell;
+#else
+	  ;
 
   inline int Cell::getFirstClusterIndex() const
   {

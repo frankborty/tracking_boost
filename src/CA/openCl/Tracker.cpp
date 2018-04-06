@@ -84,9 +84,7 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 
 	int workgroupSize=5*32;	//tmp value
 	try{
-		cl::Context oclContext=GPU::Context::getInstance().getDeviceProperties().oclContext;
-		cl::Device oclDevice=GPU::Context::getInstance().getDeviceProperties().oclDevice;
-		cl::CommandQueue oclCommandQueue=GPU::Context::getInstance().getDeviceProperties().oclQueue;
+
 
 	//boost_compute
 		compute::device boostDevice = GPU::Context::getInstance().getBoostDeviceProperties().boostDevice;
