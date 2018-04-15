@@ -20,33 +20,25 @@ namespace ITS
 {
 namespace CA
 {
-#if TRACKINGITSU_OCL_MODE
-GPU_DEVICE Cell::Cell(const int firstClusterIndex, const int secondClusterIndex, const int thirdClusterIndex,
-    const int firstTrackletIndex, const int secondTrackletIndex, const float3& normalVectorCoordinates,
-    const float curvature)
-    :   mFirstClusterIndex { firstClusterIndex },
-		mSecondClusterIndex { secondClusterIndex },
-		mThirdClusterIndex { thirdClusterIndex },
-		mFirstTrackletIndex(firstTrackletIndex),
-		mSecondTrackletIndex(secondTrackletIndex),
-		mCurvature { curvature },
-		mLevel { 1 }
-{
-	this->mNormalVectorCoordinates[0]=normalVectorCoordinates.x;
-	this->mNormalVectorCoordinates[1]=normalVectorCoordinates.y;
-	this->mNormalVectorCoordinates[2]=normalVectorCoordinates.z;
-}
-#else
+
 GPU_DEVICE Cell::Cell(const int firstClusterIndex, const int secondClusterIndex, const int thirdClusterIndex,
     const int firstTrackletIndex, const int secondTrackletIndex, const float3& normalVectorCoordinates,
     const float curvature)
     : mFirstClusterIndex { firstClusterIndex }, mSecondClusterIndex { secondClusterIndex }, mThirdClusterIndex {
-        thirdClusterIndex }, mFirstTrackletIndex(firstTrackletIndex), mSecondTrackletIndex(secondTrackletIndex), mNormalVectorCoordinates(
-        normalVectorCoordinates), mCurvature { curvature }, mLevel { 1 }
+        thirdClusterIndex }, mFirstTrackletIndex(firstTrackletIndex), mSecondTrackletIndex(secondTrackletIndex), mCurvature { curvature }, mLevel { 1 }
+{
+  this->mNormalVectorCoordinates[0]=normalVectorCoordinates.x;
+  this->mNormalVectorCoordinates[1]=normalVectorCoordinates.y;
+  this->mNormalVectorCoordinates[2]=normalVectorCoordinates.z;
+}
+
+GPU_DEVICE Cell::Cell()
+    : mFirstClusterIndex { -1 }, mSecondClusterIndex { -1 }, mThirdClusterIndex {
+        -1 }, mFirstTrackletIndex{-1}, mSecondTrackletIndex{-1}, mNormalVectorCoordinates{0.f,0.f,0.f}, mCurvature { 0.f }, mLevel { 1 }
 {
   // Nothing to do
 }
-#endif
+
 #if TRACKINGITSU_OCL_MODE
 GPU_DEVICE Cell::Cell(CellStruct& cellStruct)
     : mFirstClusterIndex { cellStruct.mFirstClusterIndex }, mSecondClusterIndex { cellStruct.mSecondClusterIndex }, mThirdClusterIndex {

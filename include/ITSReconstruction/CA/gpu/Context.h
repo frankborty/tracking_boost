@@ -52,23 +52,12 @@ struct DeviceProperties final {
 	std::size_t maxComputeUnits;
 	std::size_t maxWorkGroupSize;
 	std::size_t maxWorkItemDimension;
-	cl::Context oclContext;
-	cl::Device oclDevice;
-
-	//kernel
-	cl::Kernel oclCountTrackletKernel;
-	cl::Kernel oclComputeTrackletKernel;
-	cl::Kernel oclCountCellKernel;
-	cl::Kernel oclComputeCellKernel;
-
-	//command queues
-	cl::CommandQueue oclQueue;
-	cl::CommandQueue oclCommandQueues[Constants::ITS::TrackletsPerRoad];
 
 	//bost
 	compute::device boostDevice;
 	compute::context boostContext;
-	compute::command_queue boostCommandQueue[Constants::ITS::TrackletsPerRoad];
+	compute::command_queue boostCommandQueue;
+	compute::command_queue boostCommandQueues[Constants::ITS::TrackletsPerRoad];
 	compute::kernel countTrackletsBoostKernel;
 	compute::kernel computeTrackletsBoostKernel;
 	compute::kernel countCellsBoostKernel;

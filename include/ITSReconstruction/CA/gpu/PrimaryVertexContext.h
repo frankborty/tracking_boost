@@ -83,7 +83,7 @@ class PrimaryVertexContext
       void boostInitialize(compute::context boostContext, compute::command_queue boostQueue);
       void sortClusters(int iLayer);
 
-      GPU_DEVICE const Float3Struct* getPrimaryVertex();
+      GPU_DEVICE const FLOAT3* getPrimaryVertex();
 
       GPU_HOST_DEVICE ClusterStruct** getClusters();
       GPU_HOST_DEVICE inline void addClusters(const float3 &primaryVertex, const Cluster& other, int iLayer,int iCluster);
@@ -92,7 +92,7 @@ class PrimaryVertexContext
       GPU_HOST_DEVICE int** getTrackletsPerClusterTable();
 
     public:
-         Float3Struct mPrimaryVertex;
+         FLOAT3 mPrimaryVertex;
          cl::Buffer bPrimaryVertex;
 
          cl::Buffer bLayerIndex[Constants::ITS::LayersNumber];
@@ -133,6 +133,7 @@ class PrimaryVertexContext
          CellStruct* mCells[Constants::ITS::CellsPerRoad]={NULL};
          cl::Buffer bCells[Constants::ITS::CellsPerRoad];
          int iCellSize[Constants::ITS::CellsPerRoad];
+         int iCellFoundPerLayer[Constants::ITS::CellsPerRoad];
          cl::Buffer bCellSize;
 
          int *iCellsLookupTable[Constants::ITS::CellsPerRoad-1]={NULL};
@@ -145,7 +146,8 @@ class PrimaryVertexContext
     	 //boost
     	 compute::buffer boostPrimaryVertex;
     	 compute::buffer boostClusterSize;
-    	 compute::buffer boostTrackletsFoundForLayer;
+    	 boost::compute::vector<int> boostTrackletsFoundForLayer;
+    	 boost::compute::vector<int> boostCellsFoundForLayer;
     	 compute::buffer boostIndexTables[Constants::ITS::TrackletsPerRoad];
     	 std::array<compute::buffer,Constants::ITS::TrackletsPerRoad> boostLayerIndex;
     	 std::array<compute::vector<Cluster>, Constants::ITS::LayersNumber> boostClusters;
@@ -207,7 +209,7 @@ class PrimaryVertexContext
     return mCellsPerTrackletTable;
   }
 #elif TRACKINGITSU_OCL_MODE
-  inline const Float3Struct* PrimaryVertexContext::getPrimaryVertex()
+  inline const FLOAT3* PrimaryVertexContext::getPrimaryVertex()
     {
       return &mPrimaryVertex;
     }

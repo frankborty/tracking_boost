@@ -112,11 +112,7 @@ class PrimaryVertexContext
       public:
         GPU::PrimaryVertexContext mGPUContext;
 #endif
-#else
-        std::array<std::array<int, Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins + 1>,
-            Constants::ITS::TrackletsPerRoad> mIndexTables;
-        std::array<std::vector<Tracklet>, Constants::ITS::TrackletsPerRoad> mTracklets;
-        std::array<std::vector<int>, Constants::ITS::CellsPerRoad> mTrackletsLookupTable;
+
 #endif
     };
 

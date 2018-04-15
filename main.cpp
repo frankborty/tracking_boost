@@ -39,7 +39,6 @@ std::string getDirectory(const std::string& fname)
 
 int main(int argc, char** argv)
 {
-
 #if TRACKINGITSU_CUDA_MODE
 	std::cout<<">> CUDA"<<std::endl;
 #elif TRACKINGITSU_OCL_MODE
@@ -47,6 +46,7 @@ int main(int argc, char** argv)
 #else
 	std::cout<<">> CPU"<<std::endl;
 #endif
+
 
 
   if (argv[1] == NULL) {
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
   // Prevent cold cache benchmark noise
   Tracker<TRACKINGITSU_GPU_MODE> tracker{};
   tracker.clustersToTracks(events[0]);
-//return 4;
+
 #if defined GPU_PROFILING_MODE
   Utils::Host::gpuStartProfiler();
 #endif
