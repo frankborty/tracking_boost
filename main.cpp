@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <vector>
 
-//#define TIME_BENCHMARK
+#define TIME_BENCHMARK
 
 #if defined HAVE_VALGRIND
 # include <valgrind/callgrind.h>
