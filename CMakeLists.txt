@@ -46,10 +46,10 @@ endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 include_directories(${TRACKING-ITSU_SOURCE_DIR}/include)
 add_subdirectory(src)
 
-add_executable(tracking-itsu-main main.cpp)
+add_executable(boostTracking main.cpp)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	target_link_libraries(tracking-itsu-main src ${OpenCL_LIBRARIES})
+	target_link_libraries(boostTracking src ${OpenCL_LIBRARIES})
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
-target_link_libraries(tracking-itsu-main src)
+target_link_libraries(boostTracking src)
