@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2.0)
+    cmake_minimum_required(VERSION 3.2.0)
 project(TRACKING-ITSU C CXX)
 
 include(CheckIncludeFileCXX)
@@ -53,3 +53,7 @@ if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
 target_link_libraries(boostTracking src)
+
+install(TARGETS boostTracking
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib)

@@ -72,7 +72,7 @@ compute::kernel Utils::CreateBoostKernelFromFile(compute::context boostContext ,
 
 		std::string srcStdStr = oss.str();
 		program =compute::program::create_with_source(srcStdStr, boostContext);
-		program.build("-I /home/frank/Scrivania/boostVersion/include/ITSReconstruction/CA/");	//must be replaced with relative path
+		program.build("-I src/kernel/");	//must be replaced with relative path
 
 		// create the kernel
 		kernel=compute::kernel(program, kernelName);
