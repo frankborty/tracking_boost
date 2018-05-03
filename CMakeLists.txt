@@ -22,34 +22,30 @@ set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
 check_include_file_cxx(valgrind/callgrind.h HAVE_VALGRIND)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL GPU_CUDA)
-    message("-- Compiling for NVIDIA CUDA enabled devices")
+  message("-- Compiling for NVIDIA CUDA enabled devices")
 
-    set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_PROFILE} -DGPU_PROFILING_MODE")
+  set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_PROFILE} -DGPU_PROFILING_MODE")
 
-    add_definitions(-DTRACKINGITSU_CUDA_COMPILE)
+  add_definitions(-DTRACKINGITSU_CUDA_COMPILE)
 
-    include_directories(${TRACKING-ITSU_SOURCE_DIR}/include/gpu)
-endif(TRACKINGITSU_TARGET_DEVICE STREQUAL GPU_CUDA)
+  endif(TRACKINGITSU_TARGET_DEVICE STREQUAL GPU_CUDA)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	add_definitions(-DTRACKINGITSU_OPEN_CL_COMPILE )
-	find_package( OpenCL REQUIRED )
-	include_directories( ${OpenCl_INCLUDE_DIRS} ${TRACKING-ITSU_SOURCE_DIR}/include/ITSReconstruction/CA/openCl ${TRACKING-ITSU_SOURCE_DIR}/src)
-
-
-	#find_package(Boost REQUIRED)
-	include_directories(SYSTEM ${TRACKING-ITSU_SOURCE_DIR}/include)
-	#message(${Boost_INCLUDE_DIRS})
-
+  add_definitions(-DTRACKINGITSU_OPEN_CL_COMPILE )
+  find_package( OpenCL REQUIRED )
+  find_package(Boost REQUIRED)
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	
-include_directories(${TRACKING-ITSU_SOURCE_DIR}/include)
-add_subdirectory(src)
 
+add_subdirectory(tracker)
+include_directories(tracker/include)
 add_executable(boostTracking main.cpp)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	target_link_libraries(boostTracking src ${OpenCL_LIBRARIES})
+  target_link_libraries(boostTracking tracker ${OpenCL_LIBRARIES})
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
-target_link_libraries(boostTracking src)
+target_link_libraries(boostTracking tracker)
+
+install(TARGETS boostTracking
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib)
