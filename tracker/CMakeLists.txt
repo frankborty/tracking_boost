@@ -100,7 +100,8 @@ if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 		src/CA/openCl/kernel/countLayerTracklets.cl
 		src/CA/openCl/kernel/countLayerCells.cl
 	)
-	include_directories(${OpenCl_INCLUDE_DIRS} include/CA/openCl/kernel)
+	include_directories(${OpenCl_INCLUDE_DIRS} include/CA/openCl/kernel ${Boost_INCLUDE_DIRS})
+	include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 

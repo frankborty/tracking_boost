@@ -34,6 +34,7 @@ if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
   add_definitions(-DTRACKINGITSU_OPEN_CL_COMPILE )
   find_package( OpenCL REQUIRED )
   find_package(Boost REQUIRED)
+  include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
 add_subdirectory(tracker)
