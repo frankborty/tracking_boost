@@ -61,6 +61,8 @@ typedef struct{
 	#include "boost/compute.hpp"
 	#include "boost/compute/types/complex.hpp"
 	namespace compute = boost::compute;
+#define VEXCL_BACKEND_COMPUTE
+#include <vexcl/vexcl.hpp>
 #endif
 # define TRACKINGITSU_OCL_MODE true
 # define TRACKINGITSU_CUDA_MODE false

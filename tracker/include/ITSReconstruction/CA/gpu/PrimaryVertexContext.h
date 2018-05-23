@@ -88,6 +88,11 @@ class PrimaryVertexContext
     		  float3& mPrimaryVertex,const std::array<std::vector<Cluster>, Constants::ITS::LayersNumber>& clusters,
     		  std::array<std::vector<int>, Constants::ITS::CellsPerRoad>& mTrackletsLookupTable);
 
+      void vexClInitialize(
+          		  const Event& event,
+          		  float3& mPrimaryVertex,const std::array<std::vector<Cluster>, Constants::ITS::LayersNumber>& clusters,
+          		  std::array<std::vector<int>, Constants::ITS::CellsPerRoad>& mTrackletsLookupTable);
+
       GPU_DEVICE const FLOAT3* getPrimaryVertex();
 
       GPU_HOST_DEVICE ClusterStruct** getClusters();
@@ -152,6 +157,7 @@ class PrimaryVertexContext
     	 compute::buffer boostPrimaryVertex;
     	 compute::buffer boostClusterSize;
     	 compute::buffer boostTrackletsFoundForLayer;
+    	 compute::vector<int> boostFirstLayerCellsLookup;
     	 //compute::buffer boostIndexTables[Constants::ITS::TrackletsPerRoad];
     	 std::array<compute::buffer,Constants::ITS::TrackletsPerRoad> boostLayerIndex;
     	 std::array<compute::vector<Cluster>, Constants::ITS::LayersNumber> boostClusters;
@@ -161,6 +167,18 @@ class PrimaryVertexContext
     	 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad - 1> boostCellsLookupTable;
     	 std::array<compute::vector<int>, Constants::ITS::TrackletsPerRoad> boostIndexTables;
 
+    	 //boost
+	/*	 vex::vector<FLOAT3>  vexPrimaryVertex;
+		 compute::buffer vexClusterSize;
+		 compute::buffer vexTrackletsFoundForLayer;
+		 std::array<vex::vector<int>,Constants::ITS::TrackletsPerRoad> vexLayerIndex;
+		 std::array<compute::vector<Cluster>, Constants::ITS::LayersNumber> vexClusters;
+		 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad> vexTrackletsLookupTable;
+		 std::array<compute::vector<Tracklet>, Constants::ITS::TrackletsPerRoad> vexTracklets;
+		 std::array<compute::vector<Cell>, Constants::ITS::CellsPerRoad> vexCells;
+		 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad - 1> vexCellsLookupTable;
+		 std::array<compute::vector<int>, Constants::ITS::TrackletsPerRoad> vexIndexTables;
+*/
 
 #endif
 

@@ -75,7 +75,7 @@ compute::kernel Utils::CreateBoostKernelFromFile(compute::context boostContext ,
 
 		char options[512];
 		sprintf(options,"-I %s/include",basedir.data());
-		std::cout << options << std::endl;
+		//std::cout << options << std::endl;
 		program.build(options);
 
 		// create the kernel

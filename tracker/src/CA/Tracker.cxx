@@ -246,7 +246,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracks(const Event& eve
 
 	computeTracklets();
 	computeCells();
-   findCellsNeighbours();
+    findCellsNeighbours();
     findTracks();
     computeMontecarloLabels();
 
@@ -272,7 +272,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     mPrimaryVertexContext.initialize(event, iVertex);
     end = std::chrono::system_clock::now();
     int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-   ;
+
 
     std::cout << " - Context initialization: " << elapsed_seconds << "ms" << std::endl;
 

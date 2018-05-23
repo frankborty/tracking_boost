@@ -73,9 +73,14 @@ void PrimaryVertexContext::boostInitialize(
 
 	compute::context boostContext =GPU::Context::getInstance().getBoostDeviceProperties().boostContext;
 	compute::command_queue boostQueue =GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueues[0];
+	compute::device device =GPU::Context::getInstance().getBoostDeviceProperties().boostDevice;
 	u_int iClusterNum,iTrackletNum,iTrackletLookupSize,cellsLookupTableMemorySize;
+	compute::command_queue boostQueues[Constants::ITS::LayersNumber];
 	int iClusterSize[Constants::ITS::LayersNumber];
 	if(iInitialize==1){
+
+		this->boostFirstLayerCellsLookup=compute::vector<int>(1,boostContext);
+		this->boostTrackletsFoundForLayer=boost::compute::buffer(boostContext, o2::ITS::CA::Constants::ITS::TrackletsPerRoad * sizeof(int));
 
 		for(int i=0;i<o2::ITS::CA::Constants::ITS::TrackletsPerRoad;i++){
 			this-> boostLayerIndex[i]=compute::buffer(boostContext,sizeof(int),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,&(i));
@@ -84,6 +89,7 @@ void PrimaryVertexContext::boostInitialize(
 		this->boostPrimaryVertex= boost::compute::buffer(boostContext,sizeof(FLOAT3));
 
 		for (int iLayer { 0 }; iLayer < Constants::ITS::LayersNumber; ++iLayer){
+
 			this->boostClusters[iLayer]=compute::vector<Cluster>(1,boostContext);
 
 			if(iLayer < Constants::ITS::TrackletsPerRoad) {
@@ -92,6 +98,10 @@ void PrimaryVertexContext::boostInitialize(
 
 			if(iLayer < Constants::ITS::CellsPerRoad - 1){
 				this->boostCellsLookupTable[iLayer]=compute::vector<int>(1,boostContext);
+			}
+
+			if(iLayer < Constants::ITS::CellsPerRoad){
+				this->boostTrackletsLookupTable[iLayer]=compute::vector<int>(1,boostContext);
 			}
 
 			if(iLayer > 0){
@@ -109,9 +119,12 @@ void PrimaryVertexContext::boostInitialize(
 	for (int iLayer { 0 }; iLayer < Constants::ITS::LayersNumber; ++iLayer){
 		iClusterNum=clusters[iLayer].size();
 		iClusterSize[iLayer]=iClusterNum;
+		boostQueues[iLayer]=GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueues[iLayer];
+
 		if(this->boostClusters[iLayer].capacity()<=iClusterNum)
 			this->boostClusters[iLayer].reserve(iClusterNum);
-		compute::copy_n(clusters[iLayer].begin(), iClusterNum, this->boostClusters[iLayer].begin(), boostQueue);
+		//compute::copy_n(clusters[iLayer].begin(), iClusterNum, this->boostClusters[iLayer].begin(), boostQueue);
+		compute::copy_async(clusters[iLayer].begin(),clusters[iLayer].begin().operator +=(iClusterNum),this->boostClusters[iLayer].begin(),boostQueues[iLayer]);
 
 		if(iLayer < Constants::ITS::TrackletsPerRoad) {
 			iTrackletNum = std::ceil((Constants::Memory::TrackletsMemoryCoefficients[iLayer] * event.getLayer(iLayer).getClustersSize())
@@ -122,8 +135,8 @@ void PrimaryVertexContext::boostInitialize(
 
 		if(iLayer < Constants::ITS::CellsPerRoad) {
 			iTrackletLookupSize=event.getLayer(iLayer + 1).getClustersSize();
-			this->boostTrackletsLookupTable[iLayer]=compute::vector<int>(iTrackletLookupSize,boostContext);
-			compute::fill(this->boostTrackletsLookupTable[iLayer].begin(),this->boostTrackletsLookupTable[iLayer].end(),-1,boostQueue);
+			if(this->boostTrackletsLookupTable[iLayer].size()<=iTrackletLookupSize)
+				this->boostTrackletsLookupTable[iLayer].resize(iTrackletLookupSize);
 		}
 
 		 if(iLayer < Constants::ITS::CellsPerRoad - 1) {
@@ -150,11 +163,15 @@ void PrimaryVertexContext::boostInitialize(
 			for (int iBin { previousBinIndex + 1 }; iBin <= Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins;iBin++) {
 				tmpIndexTables[iLayer - 1][iBin] = iClusterNum;
 			}
-			compute::copy(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueue);
+			//if(device.type()==CL_DEVICE_TYPE_CPU)
+				//compute::copy(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueue);
+			//else
+				compute::copy_async(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueues[iLayer-1]);
 		 }
 
 
 	}
+
 	this->boostClusterSize=compute::buffer(boostContext,Constants::ITS::LayersNumber*sizeof(int),(cl_mem_flags)CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,iClusterSize);
 
 

@@ -51,7 +51,7 @@ Context::Context()
 		mBoostDeviceProperties.boostContext=compute::context(mBoostDeviceProperties.boostDevice);
 		mBoostDeviceProperties.boostCommandQueue=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
 
-		for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++)
+		for(int i=0;i<Constants::ITS::LayersNumber;i++)
 			mBoostDeviceProperties.boostCommandQueues[i]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
 
 		char deviceVendor[255];
