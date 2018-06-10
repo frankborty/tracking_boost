@@ -23,6 +23,7 @@
 #include "ITSReconstruction/CA/gpu/Vector.h"
 #elif TRACKINGITSU_OCL_MODE
 #include "ITSReconstruction/CA/gpu/StructGPUPrimaryVertex.h"
+#include "ITSReconstruction/CA/Event.h"
 #endif
 
 
@@ -80,8 +81,11 @@ class PrimaryVertexContext
 
 #if TRACKINGITSU_OCL_MODE
       void initialize(cl::Context oclContext);
-      void boostInitialize(compute::context boostContext, compute::command_queue boostQueue);
       void sortClusters(int iLayer);
+      void boostInitialize(
+    		  const Event& event,
+    		  float3& mPrimaryVertex,const std::array<std::vector<Cluster>, Constants::ITS::LayersNumber>& clusters,
+    		  std::array<std::vector<int>, Constants::ITS::CellsPerRoad>& mTrackletsLookupTable);
 
       GPU_DEVICE const FLOAT3* getPrimaryVertex();
 
@@ -92,6 +96,7 @@ class PrimaryVertexContext
       GPU_HOST_DEVICE int** getTrackletsPerClusterTable();
 
     public:
+      	 int iInitialize=1;
          FLOAT3 mPrimaryVertex;
          cl::Buffer bPrimaryVertex;
 
@@ -146,15 +151,18 @@ class PrimaryVertexContext
     	 //boost
     	 compute::buffer boostPrimaryVertex;
     	 compute::buffer boostClusterSize;
-    	 boost::compute::vector<int> boostTrackletsFoundForLayer;
-    	 boost::compute::vector<int> boostCellsFoundForLayer;
-    	 compute::buffer boostIndexTables[Constants::ITS::TrackletsPerRoad];
+    	 boost::compute::vector<int> boostTrackletsFoundForLayer; //new
+		 boost::compute::vector<int> boostCellsFoundForLayer;	//new
+		 std::array<compute::vector<int>, Constants::ITS::TrackletsPerRoad> boostIndexTables;
+
     	 std::array<compute::buffer,Constants::ITS::TrackletsPerRoad> boostLayerIndex;
     	 std::array<compute::vector<Cluster>, Constants::ITS::LayersNumber> boostClusters;
     	 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad> boostTrackletsLookupTable;
     	 std::array<compute::vector<Tracklet>, Constants::ITS::TrackletsPerRoad> boostTracklets;
     	 std::array<compute::vector<Cell>, Constants::ITS::CellsPerRoad> boostCells;
     	 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad - 1> boostCellsLookupTable;
+
+
 
 
 #endif

@@ -96,9 +96,12 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 		compute::device boostDevice = GPU::Context::getInstance().getBoostDeviceProperties().boostDevice;
 		compute::context boostContext= GPU::Context::getInstance().getBoostDeviceProperties().boostContext;
 		compute::kernel computeTrackletKernel=GPU::Context::getInstance().getBoostDeviceProperties().computeTrackletsBoostKernel;
-		for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++)
+
+
+		for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++){
 			boostQueues[i]=GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueues[i];
-		///
+			boostQueues[i].finish();
+		}
 
 
 		iClustersNum=primaryVertexContext.mClusters[0].size();
@@ -244,13 +247,15 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 	int workgroupSize=5*32;
 	compute::command_queue boostQueues[Constants::ITS::TrackletsPerRoad];
 	try{
-
 		compute::context boostContext=GPU::Context::getInstance().getBoostDeviceProperties().boostContext;
 		compute::kernel computeCellsBoostKernel=GPU::Context::getInstance().getBoostDeviceProperties().computeCellsBoostKernel;
 		for(int i=0;i<Constants::ITS::TrackletsPerRoad;i++){
 			boostQueues[i]=GPU::Context::getInstance().getBoostDeviceProperties().boostCommandQueues[i];
 			boostQueues[i].finish();
 		}
+
+
+
 		boost::compute::vector<int> tmpboostCellsFoundForLayer;
 		int iCellFoundPerLayer[]={0,0,0,0,0};
 		primaryVertexContext.mGPUContext.boostCellsFoundForLayer=compute::vector<int>(Constants::ITS::CellsPerRoad,boostContext);
@@ -307,7 +312,6 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 
 
 
-
 		//scan
 		for (int iLayer { 0 }; iLayer<Constants::ITS::CellsPerRoad; ++iLayer) {
 			boostQueues[iLayer].finish();
@@ -349,6 +353,8 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 			}
 			//std::cout<<"["<<iLayer<<"]: "<<primaryVertexContext.mGPUContext.iCellFoundPerLayer[iLayer]<<std::endl;
 		}
+
+
 		BOOST_COMPUTE_FUNCTION(bool, sort_by_y, (Cell a, Cell b),
 		{
 			return a.mFirstTrackletIndex < b.mFirstTrackletIndex;
