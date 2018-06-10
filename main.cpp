@@ -29,6 +29,7 @@ int maxEvent,minEvent;
 # include "ITSReconstruction/CA/gpu/Utils.h"
 #endif
 
+
 using namespace o2::ITS::CA;
 
 std::string getDirectory(const std::string& fname)
@@ -36,10 +37,97 @@ std::string getDirectory(const std::string& fname)
   size_t pos = fname.find_last_of("\\/");
   return (std::string::npos == pos) ? "" : fname.substr(0, pos + 1);
 }
-
+//#define N 1024*32
 int main(int argc, char** argv)
 {
-std::cout<<"8"<<std::endl;
+
+#if 0
+
+	///// vexcl
+	
+	compute::device device = compute::system::default_device();
+    compute::context context(device);
+    compute::command_queue queue(context, device);
+	std::vector<int> h(N);       // Host vector.
+	for(int i=0;i<N;i++)
+		h[i]=rand() % 10;
+	
+	//for(int i=0;i<5;i++)
+	//	std::cout<<"["<<i<<"]: "<<h[i]<<"\t";
+	//std::cout<<std::endl;
+	
+	vex::vector<int> d({queue}, N);  // Device vector.
+	vex::copy(h, d);    // Copy data from host to device.
+   	std::chrono::time_point<std::chrono::system_clock> start, end;
+	vex::inclusive_scan(d,d,0);
+	start = std::chrono::system_clock::now();
+	vex::inclusive_scan(d,d,0);
+	end = std::chrono::system_clock::now();
+    int elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+	std::cout<<N<<"\t"<<elapsed_seconds<<std::endl;
+	vex::copy(d,h);
+	
+
+	//for(int i=0;i<5;i++)
+	//	std::cout<<"["<<i<<"]: "<<h[i]<<"\t";
+	//std::cout<<std::endl;
+	
+	///////////
+	
+	
+	
+	
+	//////////boost
+	/*
+	compute::device device = compute::system::default_device();
+    compute::context context(device);
+    compute::command_queue queue(context, device);
+	
+	
+	
+	int host_data[N];
+	for(int i=0;i<N;i++)
+		host_data[i]=rand() % 10;
+	
+	compute::vector<int> device_vector(N, context);
+	
+	 // copy from host to device
+    compute::copy(
+        host_data, host_data + N, device_vector.begin(), queue
+    );
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	compute::inclusive_scan(device_vector.begin(),
+							device_vector.end(),
+							device_vector.begin(),
+							queue);
+	queue.finish();
+	start = std::chrono::system_clock::now();
+	compute::inclusive_scan(device_vector.begin(),
+							device_vector.end(),
+							device_vector.begin(),
+							queue);
+	queue.finish();
+	end = std::chrono::system_clock::now();
+    int elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+	std::cout<<N<<"\t"<<elapsed_seconds<<std::endl;
+	
+    // create vector on host
+    std::vector<int> host_vector(N);
+
+    // copy data back to host
+    compute::copy(
+        device_vector.begin(), device_vector.end(), host_vector.begin(), queue
+    );
+	*/
+	///////////////////
+	
+	
+	
+	
+	return 1;
+}
+#else
+
 #if TRACKINGITSU_CUDA_MODE
 	std::cout<<">> CUDA"<<std::endl;
 #elif TRACKINGITSU_OCL_MODE
@@ -183,3 +271,4 @@ std::cout<<"8"<<std::endl;
 
   return 0;
 }
+#endif

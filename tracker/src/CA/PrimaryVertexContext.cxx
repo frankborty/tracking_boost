@@ -86,13 +86,13 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	  }
 
 	  mRoads.clear();
-	  for (int iLayer { 0 }; iLayer < Constants::ITS::LayersNumber; ++iLayer) {
-	      if(iLayer < Constants::ITS::CellsPerRoad) {
-	        mTrackletsLookupTable[iLayer].clear();
-	        mTrackletsLookupTable[iLayer].resize(
-	           event.getLayer(iLayer + 1).getClustersSize(), Constants::ITS::UnusedIndex);
-	        }
-	    }
+		for (int iLayer { 0 }; iLayer < Constants::ITS::LayersNumber; ++iLayer) {
+	  	if(iLayer < Constants::ITS::CellsPerRoad) {
+			mTrackletsLookupTable[iLayer].clear();
+			mTrackletsLookupTable[iLayer].resize(
+		   	event.getLayer(iLayer + 1).getClustersSize(), Constants::ITS::UnusedIndex);
+		}
+	}
 
 
 

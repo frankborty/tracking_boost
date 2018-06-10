@@ -123,8 +123,8 @@ void PrimaryVertexContext::boostInitialize(
 
 		if(this->boostClusters[iLayer].capacity()<=iClusterNum)
 			this->boostClusters[iLayer].reserve(iClusterNum);
-		//compute::copy_n(clusters[iLayer].begin(), iClusterNum, this->boostClusters[iLayer].begin(), boostQueue);
-		compute::copy_async(clusters[iLayer].begin(),clusters[iLayer].begin().operator +=(iClusterNum),this->boostClusters[iLayer].begin(),boostQueues[iLayer]);
+		compute::copy_n(clusters[iLayer].begin(), iClusterNum, this->boostClusters[iLayer].begin(), boostQueue);
+		//compute::copy_async(clusters[iLayer].begin(),clusters[iLayer].begin().operator +=(iClusterNum),this->boostClusters[iLayer].begin(),boostQueues[iLayer]);
 
 		if(iLayer < Constants::ITS::TrackletsPerRoad) {
 			iTrackletNum = std::ceil((Constants::Memory::TrackletsMemoryCoefficients[iLayer] * event.getLayer(iLayer).getClustersSize())
@@ -163,10 +163,9 @@ void PrimaryVertexContext::boostInitialize(
 			for (int iBin { previousBinIndex + 1 }; iBin <= Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins;iBin++) {
 				tmpIndexTables[iLayer - 1][iBin] = iClusterNum;
 			}
-			//if(device.type()==CL_DEVICE_TYPE_CPU)
-				//compute::copy(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueue);
-			//else
-				compute::copy_async(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueues[iLayer-1]);
+				compute::copy(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueue);
+			
+				//compute::copy_async(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueues[iLayer-1]);
 		 }
 
 

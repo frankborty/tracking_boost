@@ -62,7 +62,7 @@ struct DeviceProperties final {
 	compute::kernel computeTrackletsBoostKernel;
 	compute::kernel countCellsBoostKernel;
 	compute::kernel computeCellsBoostKernel;
-
+	int fixedWorkSize = 32;
 
 #endif
 };
