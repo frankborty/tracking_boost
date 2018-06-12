@@ -82,6 +82,10 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 	compute::buffer boostTrackletLookUpTable;
 	compute::command_queue boostQueues[Constants::ITS::LayersNumber];
 	int workgroupSize=32;	//tmp value
+	
+	//std::chrono::time_point<std::chrono::system_clock> start, end;
+	//int elapsed_seconds;
+	
 	try{
 
 
@@ -115,6 +119,8 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 			firstLayerLookUpTable, firstLayerLookUpTable+iClustersNum, boostFirstLayerTrackletsLookup.begin(), boostQueues[0]
 		);
 
+		//start = std::chrono::system_clock::now();
+	
 
 		for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer){
 			iClustersNum=primaryVertexContext.mClusters[iLayer].size();
@@ -141,9 +147,21 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 
 		}
 
+		
+		/*
+		end = std::chrono::system_clock::now();
+		elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		std::cout<<"track count: "<<elapsed_seconds<<std::endl;
+
+		start = std::chrono::system_clock::now();
+		*/
+		
+		
 //#define BOOST_T
 #ifdef BOOST_T
 		//scan
+	
+		
 		for (int iLayer { 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer) {
 			boostQueues[iLayer].finish();
 			iClustersNum=primaryVertexContext.mGPUContext.iClusterSize[iLayer];
@@ -223,6 +241,13 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 				o2::ITS::CA::Constants::ITS::TrackletsPerRoad* sizeof(int),
 				&(primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[0]));
 
+		/*
+		end = std::chrono::system_clock::now();
+		elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		std::cout<<"scan count: "<<elapsed_seconds<<std::endl;
+
+		start = std::chrono::system_clock::now();
+		*/	
 
 		//calcolo le tracklet
 		for (int iLayer{ 0 }; iLayer<Constants::ITS::TrackletsPerRoad; ++iLayer) {
@@ -251,7 +276,10 @@ void TrackerTraits<true>::computeLayerTracklets(CA::PrimaryVertexContext& primar
 			boostQueues[iLayer].enqueue_1d_range_kernel(computeTrackletKernel,0,pseudoClusterNumber,0);
 
 		}
-
+	/*end = std::chrono::system_clock::now();
+    elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+	std::cout<<"track compute: "<<elapsed_seconds<<std::endl;
+	*/
 		free(firstLayerLookUpTable);
 	}catch (std::exception& e) {
 			std::cout<<e.what()<<std::endl;
@@ -271,6 +299,8 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 	int workgroupSize=32;
 	int cellsFound[Constants::ITS::CellsPerRoad];
 	compute::command_queue boostQueues[Constants::ITS::TrackletsPerRoad];
+	//std::chrono::time_point<std::chrono::system_clock> start, end;
+	//int elapsed_seconds;
 	try{
 		//boost_compute
 		compute::device boostDevice = GPU::Context::getInstance().getBoostDeviceProperties().boostDevice;
@@ -305,6 +335,8 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 		);
 
 
+	
+		//start = std::chrono::system_clock::now();
 
 		for (int iLayer{ 0 }; iLayer<Constants::ITS::CellsPerRoad; ++iLayer){
 
@@ -332,8 +364,12 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 
 			boostQueues[iLayer].enqueue_1d_range_kernel(countCellsKernel,0,pseudoTrackletsNumber,0);
 		}
+/*
+		end = std::chrono::system_clock::now();
+		elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		std::cout<<"cell count: "<<elapsed_seconds<<std::endl;
 
-
+		start = std::chrono::system_clock::now();*/
 		//scan
 //#define BOOST_C
 #ifdef BOOST_C
@@ -398,7 +434,13 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 		}
 
 #endif
+		/*
+		end = std::chrono::system_clock::now();
+		elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		std::cout<<"cell scan: "<<elapsed_seconds<<std::endl;
 
+		start = std::chrono::system_clock::now();
+		*/
 		for (int iLayer{ 0 }; iLayer<Constants::ITS::CellsPerRoad; ++iLayer) {
 			pseudoTrackletsNumber=primaryVertexContext.mGPUContext.iTrackletFoundPerLayer[iLayer];
 			boostQueues[iLayer].finish();
@@ -430,7 +472,12 @@ void TrackerTraits<true>::computeLayerCells(CA::PrimaryVertexContext& primaryVer
 			boostQueues[iLayer].enqueue_1d_range_kernel(computeCellsKernel,0,pseudoTrackletsNumber,0);
 
 		}
-
+		/*
+		end = std::chrono::system_clock::now();
+		elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		std::cout<<"cell compute: "<<elapsed_seconds<<std::endl;
+		*/
+		
 
 		for (int iLayer{ 0 }; iLayer<Constants::ITS::CellsPerRoad; ++iLayer){
 			boostQueues[iLayer].finish();
