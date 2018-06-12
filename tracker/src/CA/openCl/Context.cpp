@@ -47,12 +47,17 @@ Context::Context()
 		std::cin>>scelta;
 		iCurrentDevice=scelta;
 		mDevicesNum=boostDevicesList.size();
+		
 		mBoostDeviceProperties.boostDevice=boostDevicesList[scelta];
+		std::cout<<"boostDevice done"<<std::endl;
 		mBoostDeviceProperties.boostContext=compute::context(mBoostDeviceProperties.boostDevice);
+		std::cout<<"boostContext done"<<std::endl;
 		mBoostDeviceProperties.boostCommandQueue=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
-
+		std::cout<<"first boostCommandQueue done"<<std::endl;
+		
 		for(int i=0;i<Constants::ITS::LayersNumber;i++)
 			mBoostDeviceProperties.boostCommandQueues[i]=compute::command_queue(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice);
+		std::cout<<"all boostCommandQueue done"<<std::endl;
 
 		char deviceVendor[255];
 		int warpSize=0;
@@ -68,18 +73,21 @@ Context::Context()
 		else{
 			warpSize=128;
 		}
-
+		std::cout<<"wavefront done"<<std::endl;
 
 		mBoostDeviceProperties.warpSize=warpSize;
 		mBoostDeviceProperties.countTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext, mBoostDeviceProperties.boostDevice,"countLayerTracklets.cl","countLayerTracklets");
+		std::cout<<"countTrackletsBoostKernel done"<<std::endl;
 		mBoostDeviceProperties.computeTrackletsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"computeLayerTracklets.cl","computeLayerTracklets");
+		std::cout<<"computeTrackletsBoostKernel done"<<std::endl;
 		mBoostDeviceProperties.countCellsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"countLayerCells.cl","countLayerCells");
+		std::cout<<"countCellsBoostKernel done"<<std::endl;
 		mBoostDeviceProperties.computeCellsBoostKernel=GPU::Utils::CreateBoostKernelFromFile(mBoostDeviceProperties.boostContext,mBoostDeviceProperties.boostDevice,"computeLayerCells.cl","computeLayerCells");
-
+		std::cout<<"computeCellsBoostKernel done"<<std::endl;
 
 	}catch(const cl::Error &err){
 		std::string errString=Utils::OCLErr_code(err.err());
-		//std::cout<< errString << std::endl;
+		std::cout<< errString << std::endl;
 		throw std::runtime_error { errString };
 	}
 }

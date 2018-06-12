@@ -71,6 +71,7 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
 	      }
 	      mGPUContext.boostCells[iLayer]=compute::vector<Cell>(cellsMemorySize,boostContext);
 	    }
+		std::cout<<iLayer<<" boostCells"<<std::endl;
 
 	    if(iLayer < Constants::ITS::CellsPerRoad - 1) {
 	    	int cellsLookupTableMemorySize=std::ceil((Constants::Memory::TrackletsMemoryCoefficients[iLayer + 1] * event.getLayer(iLayer + 1).getClustersSize())
@@ -159,6 +160,7 @@ void PrimaryVertexContext::initialize(const Event& event, const int primaryVerte
   	  mGPUContextDevicePointer = mGPUContext.initialize(mPrimaryVertex, mClusters, mCells, mCellsLookupTable);
 #elif TRACKINGITSU_OCL_MODE
   	  mGPUContext.boostInitialize(event,mPrimaryVertex,mClusters,mTrackletsLookupTable);
+	std::cout<<"exit from boostInitializatoin phase"<<std::endl;
 #endif
 
 #if !TRACKINGITSU_GPU_MODE
