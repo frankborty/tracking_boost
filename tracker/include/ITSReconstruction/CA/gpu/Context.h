@@ -45,11 +45,7 @@ struct DeviceProperties final {
 	dim3 maxGridDim;
 #else
 	std::string name;
-	long globalMemorySize;
-	int warpSize;
 
-	std::string vendor;
-	std::size_t maxComputeUnits;
 	std::size_t maxWorkGroupSize;
 	std::size_t maxWorkItemDimension;
 

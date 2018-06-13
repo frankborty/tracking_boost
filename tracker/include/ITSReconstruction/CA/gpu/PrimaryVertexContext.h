@@ -22,7 +22,6 @@
 #include "ITSReconstruction/CA/gpu/UniquePointer.h"
 #include "ITSReconstruction/CA/gpu/Vector.h"
 #elif TRACKINGITSU_OCL_MODE
-#include "ITSReconstruction/CA/gpu/StructGPUPrimaryVertex.h"
 #include "ITSReconstruction/CA/Event.h"
 #endif
 
@@ -80,78 +79,18 @@ class PrimaryVertexContext
 #endif
 
 #if TRACKINGITSU_OCL_MODE
-      void initialize(cl::Context oclContext);
 
-      void sortClusters(int iLayer);
       void boostInitialize(
     		  const Event& event,
     		  float3& mPrimaryVertex,const std::array<std::vector<Cluster>, Constants::ITS::LayersNumber>& clusters,
     		  std::array<std::vector<int>, Constants::ITS::CellsPerRoad>& mTrackletsLookupTable);
 
-      void vexClInitialize(
-          		  const Event& event,
-          		  float3& mPrimaryVertex,const std::array<std::vector<Cluster>, Constants::ITS::LayersNumber>& clusters,
-          		  std::array<std::vector<int>, Constants::ITS::CellsPerRoad>& mTrackletsLookupTable);
 
-      GPU_DEVICE const FLOAT3* getPrimaryVertex();
-
-      GPU_HOST_DEVICE ClusterStruct** getClusters();
-      GPU_HOST_DEVICE inline void addClusters(const float3 &primaryVertex, const Cluster& other, int iLayer,int iCluster);
-      GPU_HOST_DEVICE TrackletStruct** getTracklets();
-      GPU_HOST_DEVICE int** getTrackletsLookupTable();
-      GPU_HOST_DEVICE int** getTrackletsPerClusterTable();
 
     public:
       	 int iInitialize=1;
-         FLOAT3 mPrimaryVertex;
-         cl::Buffer bPrimaryVertex;
-
-         cl::Buffer bLayerIndex[Constants::ITS::LayersNumber];
-
-         ClusterStruct* mClusters[Constants::ITS::LayersNumber]={NULL};
-         cl::Buffer bClusters[Constants::ITS::LayersNumber];
-         cl::Buffer bClustersSize;
          int iClusterSize[Constants::ITS::LayersNumber];
-         int iClusterAllocatedSize[Constants::ITS::LayersNumber];
-
-         int iIndexTableSize=Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins + 1;
-         int mIndexTables[Constants::ITS::TrackletsPerRoad][Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins + 1];
-         cl::Buffer bIndexTables[Constants::ITS::TrackletsPerRoad];
-
-
-         TrackletStruct* mTracklets[Constants::ITS::TrackletsPerRoad]={NULL};
-         cl::Buffer bTracklets[Constants::ITS::TrackletsPerRoad];
-         int iTrackletSize[Constants::ITS::TrackletsPerRoad];
          int iTrackletFoundPerLayer[Constants::ITS::TrackletsPerRoad];
-         int iTrackletAllocatedSize[Constants::ITS::TrackletsPerRoad];
-         cl::Buffer bTrackletsSize;
-
-         int* mTrackletsLookupTable[Constants::ITS::CellsPerRoad]={NULL};
-         int iTrackletsLookupTableSize[Constants::ITS::CellsPerRoad];
-         int iTrackletsLookupTableAllocatedSize[Constants::ITS::CellsPerRoad];
-         cl::Buffer bTrackletsLookupTable[Constants::ITS::CellsPerRoad];
-
-
-         int* mTrackletsPerClusterTable[Constants::ITS::CellsPerRoad];
-         cl::Buffer bTrackletsFoundForLayer;
-         cl::Buffer bCellsFoundForLayer;
-         int* iCellsPerTrackletTable[Constants::ITS::CellsPerRoad];
-         cl::Buffer bCellsFoundForTracklet;
-
-         //std::array<std::vector<Cluster>, Constants::ITS::LayersNumber> mClustersVector;
-
-         ////// cells //////
-         CellStruct* mCells[Constants::ITS::CellsPerRoad]={NULL};
-         cl::Buffer bCells[Constants::ITS::CellsPerRoad];
-         int iCellSize[Constants::ITS::CellsPerRoad];
-         cl::Buffer bCellSize;
-
-         int *iCellsLookupTable[Constants::ITS::CellsPerRoad-1]={NULL};
-         cl::Buffer bCellsLookupTable[Constants::ITS::CellsPerRoad-1];
-    	 int iCellsLookupTableSize[Constants::ITS::CellsPerRoad-1];
-    	 cl::Buffer bCellsLookupTableSize;
-
-    	 int *mCellsNeighbours[Constants::ITS::CellsPerRoad - 1]={NULL};
 
     	 //boost
     	 compute::buffer boostPrimaryVertex;
@@ -166,19 +105,6 @@ class PrimaryVertexContext
     	 std::array<compute::vector<Cell>, Constants::ITS::CellsPerRoad> boostCells;
     	 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad - 1> boostCellsLookupTable;
     	 std::array<compute::vector<int>, Constants::ITS::TrackletsPerRoad> boostIndexTables;
-
-    	 //boost
-	/*	 vex::vector<FLOAT3>  vexPrimaryVertex;
-		 compute::buffer vexClusterSize;
-		 compute::buffer vexTrackletsFoundForLayer;
-		 std::array<vex::vector<int>,Constants::ITS::TrackletsPerRoad> vexLayerIndex;
-		 std::array<compute::vector<Cluster>, Constants::ITS::LayersNumber> vexClusters;
-		 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad> vexTrackletsLookupTable;
-		 std::array<compute::vector<Tracklet>, Constants::ITS::TrackletsPerRoad> vexTracklets;
-		 std::array<compute::vector<Cell>, Constants::ITS::CellsPerRoad> vexCells;
-		 std::array<compute::vector<int>, Constants::ITS::CellsPerRoad - 1> vexCellsLookupTable;
-		 std::array<compute::vector<int>, Constants::ITS::TrackletsPerRoad> vexIndexTables;
-*/
 
 #endif
 
@@ -232,49 +158,7 @@ class PrimaryVertexContext
     return mCellsPerTrackletTable;
   }
 #elif TRACKINGITSU_OCL_MODE
-  inline const FLOAT3* PrimaryVertexContext::getPrimaryVertex()
-    {
-      return &mPrimaryVertex;
-    }
 
-    GPU_HOST_DEVICE inline ClusterStruct** PrimaryVertexContext::getClusters()
-    {
-      return mClusters;
-    }
-
-    GPU_HOST_DEVICE inline void PrimaryVertexContext::addClusters(const float3 &primaryVertex, const Cluster& other, int iLayer,int iCluster)
-    {
-  	  	mClusters[iLayer][iCluster].xCoordinate=other.xCoordinate;
-  	  	mClusters[iLayer][iCluster].yCoordinate=other.yCoordinate;
-  	  	mClusters[iLayer][iCluster].zCoordinate=other.zCoordinate;
-  	  	mClusters[iLayer][iCluster].clusterId=other.clusterId;
-  	  	mClusters[iLayer][iCluster].monteCarloId=other.monteCarloId;
-  	  	mClusters[iLayer][iCluster].alphaAngle=other.alphaAngle;
-  		mClusters[iLayer][iCluster].phiCoordinate=MathUtils::getNormalizedPhiCoordinate(MathUtils::calculatePhiCoordinate(other.xCoordinate - primaryVertex.x, other.yCoordinate - primaryVertex.y));
-  		mClusters[iLayer][iCluster].rCoordinate=MathUtils::calculateRCoordinate(other.xCoordinate - primaryVertex.x, other.yCoordinate - primaryVertex.y);
-  		mClusters[iLayer][iCluster].indexTableBinIndex=IndexTableUtils::getBinIndex(IndexTableUtils::getZBinIndex(iLayer, other.zCoordinate),IndexTableUtils::getPhiBinIndex(mClusters[iLayer][iCluster].phiCoordinate)) ;
-
-    }
-  /*
-    GPU_DEVICE inline int** PrimaryVertexContext::getIndexTables()
-    {
-      return mIndexTables;
-    }
-  */
-    GPU_DEVICE inline TrackletStruct** PrimaryVertexContext::getTracklets()
-    {
-      return mTracklets;
-    }
-
-    GPU_DEVICE inline int** PrimaryVertexContext::getTrackletsLookupTable()
-    {
-      return mTrackletsLookupTable;
-    }
-
-    GPU_DEVICE inline int** PrimaryVertexContext::getTrackletsPerClusterTable()
-    {
-      return mTrackletsPerClusterTable;
-    }
   #endif
 }
 }

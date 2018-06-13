@@ -46,7 +46,7 @@ void gpuStartProfiler();
 void gpuStopProfiler();
 }
 #if TRACKINGITSU_OCL_MODE
-int findNearestDivisor(const int numToRound, const int divisor);
+		int findNearestDivisor(const int numToRound, const int divisor);
 		int roundUp(const int numToRound, const int multiple);
 		char *OCLErr_code (int err_in);
 		compute::kernel CreateBoostKernelFromFile(compute::context boostContext , compute::device boostDevice, const char* fileName,const char* kernelName);

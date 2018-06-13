@@ -88,7 +88,8 @@ class PrimaryVertexContext
                     Constants::ITS::TrackletsPerRoad> mIndexTables;
         std::array<std::vector<Tracklet>, Constants::ITS::TrackletsPerRoad> mTracklets;
         std::array<std::vector<int>, Constants::ITS::CellsPerRoad> mTrackletsLookupTable;
-        //std::array<std::vector<Cell>, Constants::ITS::CellsPerRoad> mCells;
+
+
 #if TRACKINGITSU_OCL_MODE
       public:
         std::array<std::vector<Cell>, Constants::ITS::CellsPerRoad> mCells;
