@@ -148,9 +148,9 @@ void PrimaryVertexContext::boostInitialize(
 			for (int iBin { previousBinIndex + 1 }; iBin <= Constants::IndexTable::ZBins * Constants::IndexTable::PhiBins;iBin++) {
 				tmpIndexTables[iLayer - 1][iBin] = iClusterNum;
 			}
-			//if(device.type()==CL_DEVICE_TYPE_CPU)
-				//compute::copy(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueue);
-			//else
+			if(device.type()==CL_DEVICE_TYPE_CPU)
+				compute::copy(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueue);
+			else
 				compute::copy_async(tmpIndexTables[iLayer-1].begin(), tmpIndexTables[iLayer-1].end(), this->boostIndexTables[iLayer-1].begin(), boostQueues[iLayer-1]);
 		 }
 
