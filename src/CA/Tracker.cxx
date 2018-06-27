@@ -271,7 +271,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     start = std::chrono::system_clock::now();
     mPrimaryVertexContext.initialize(event, iVertex);
     end = std::chrono::system_clock::now();
-    int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    int elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
    ;
 
     std::cout << " - Context initialization: " << elapsed_seconds << "ms" << std::endl;
@@ -283,7 +283,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksVerbose(const Eve
     evaluateTask(&Tracker<IsGPU>::computeMontecarloLabels, "Computing Montecarlo Labels");
 
     end = std::chrono::system_clock::now();
-    elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
     std::cout  << " - Vertex " << iVertex + 1 << " completed in: " << elapsed_seconds << "ms" << std::endl;
 
     roads.emplace_back(mPrimaryVertexContext.getRoads());
@@ -372,7 +372,7 @@ std::vector<std::vector<Road>> Tracker<IsGPU>::clustersToTracksTimeBenchmark(
 	start = std::chrono::system_clock::now();
     mPrimaryVertexContext.initialize(event, iVertex);
     end = std::chrono::system_clock::now();
-	int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+	int elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
     total += elapsed_seconds;
     timeBenchmarkOutputStream << elapsed_seconds << "\t";
 
@@ -659,7 +659,7 @@ float Tracker<IsGPU>::evaluateTask(void (Tracker<IsGPU>::*task)(void), const cha
   (this->*task)();
 
   end = std::chrono::system_clock::now();
-  int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+  int elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
 
   if (taskName == nullptr) {
 

@@ -132,7 +132,7 @@ int main(int argc, char** argv)
 
       //t2 = clock();
       end = std::chrono::system_clock::now();
-      int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+      int elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
 //      const float diff = ((float) t2 - (float) t1) / (CLOCKS_PER_SEC / 1000);
 
       totalTime += elapsed_seconds;
