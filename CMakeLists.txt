@@ -6,7 +6,7 @@ include(CheckIncludeFileCXX)
 set(TRACKINGITSU_TARGET_DEVICE CPU CACHE STRING "Target device where code must be run. Options are: CPU (default), GPU_CUDA, OPEN_CL")
 set_property(CACHE TRACKINGITSU_TARGET_DEVICE PROPERTY STRINGS CPU GPU_CUDA OPEN_CL)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -O3")
+set(CMAKE_CXX_FLAGS "-std=c++14 -Wall -O3 -fext-numeric-literals")
 set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG -g -O0")
 set(CMAKE_CXX_FLAGS_PROFILE "-pg" CACHE STRING "Flags used by the C++ compiler during profiling builds.")
 set(CMAKE_CXX_FLAGS_MEMORYBENCHMARK "-DMEMORY_BENCHMARK" CACHE STRING "Flags used by the C++ compiler during memory benchmark builds.")
@@ -22,34 +22,31 @@ set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
 check_include_file_cxx(valgrind/callgrind.h HAVE_VALGRIND)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL GPU_CUDA)
-    message("-- Compiling for NVIDIA CUDA enabled devices")
+  message("-- Compiling for NVIDIA CUDA enabled devices")
 
-    set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_PROFILE} -DGPU_PROFILING_MODE")
+  set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_PROFILE} -DGPU_PROFILING_MODE")
 
-    add_definitions(-DTRACKINGITSU_CUDA_COMPILE)
+  add_definitions(-DTRACKINGITSU_CUDA_COMPILE)
 
-    include_directories(${TRACKING-ITSU_SOURCE_DIR}/include/gpu)
-endif(TRACKINGITSU_TARGET_DEVICE STREQUAL GPU_CUDA)
-
-if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	add_definitions(-DTRACKINGITSU_OPEN_CL_COMPILE )
-	find_package( OpenCL REQUIRED )
-	include_directories( ${OpenCl_INCLUDE_DIRS} ${TRACKING-ITSU_SOURCE_DIR}/include/ITSReconstruction/CA/openCl ${TRACKING-ITSU_SOURCE_DIR}/src)
-
-
-	#find_package(Boost REQUIRED)
-	include_directories(SYSTEM ${TRACKING-ITSU_SOURCE_DIR}/include)
-	#message(${Boost_INCLUDE_DIRS})
-
-endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	
-include_directories(${TRACKING-ITSU_SOURCE_DIR}/include)
-add_subdirectory(src)
-
-add_executable(tracking-itsu-main main.cpp)
+  endif(TRACKINGITSU_TARGET_DEVICE STREQUAL GPU_CUDA)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-	target_link_libraries(tracking-itsu-main src ${OpenCL_LIBRARIES})
+  add_definitions(-DTRACKINGITSU_OPEN_CL_COMPILE )
+  find_package( OpenCL REQUIRED )
+  find_package(Boost REQUIRED)
+  include_directories(SYSTEM ${Boost_INCLUDE_DIRS} )
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
-target_link_libraries(tracking-itsu-main src)
+add_subdirectory(tracker)
+include_directories(tracker/include)
+add_executable(sortTracklet main.cpp)
+
+if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
+  target_link_libraries(sortTracklet tracker ${OpenCL_LIBRARIES})
+endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
+
+target_link_libraries(sortTracklet tracker)
+
+install(TARGETS sortTracklet
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib)
