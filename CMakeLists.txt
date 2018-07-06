@@ -39,14 +39,14 @@ endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
 add_subdirectory(tracker)
 include_directories(tracker/include)
-add_executable(sortTracklet main.cpp)
+add_executable(sortTracking main.cpp)
 
 if(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
-  target_link_libraries(sortTracklet tracker ${OpenCL_LIBRARIES})
+  target_link_libraries(sortTracking tracker ${OpenCL_LIBRARIES})
 endif(TRACKINGITSU_TARGET_DEVICE STREQUAL OPEN_CL)
 
-target_link_libraries(sortTracklet tracker)
+target_link_libraries(sortTracking tracker)
 
-install(TARGETS sortTracklet
+install(TARGETS sortTracking
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib)
